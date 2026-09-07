@@ -1,0 +1,116 @@
+import type { ErrorCode, ProgressInfo } from "@/types";
+
+/**
+ * @imgly/background-removal 封装 —— 全项目技术核心。
+ *
+ * 关键事实(决定这里的写法):
+ * - npm 包是纯 JS,模型与 ORT 运行时在运行时从 CDN 分块 fetch,
+ *   因此只需动态 import,SSR 路径永不加载,Next.js 零配置。
+ * - progress 回调:下载阶段 key 形如 "fetch:<资源>"(current/total 为字节,
+ *   跨多个资源多次触发);推理阶段只有 4 个里程碑
+ *   compute:decode → inference → mask → encode,没有细粒度进度。
+ * - CPU/WASM 推理跑在主线程(proxyToWorker 对 CPU 有已知 bug,不开);
+ *   device: 'gpu' 时库内部检测 WebGPU,不支持则自动回退 wasm。
+ */
+
+/** 每个资源 key 的字节进度,跨 key 聚合出总百分比 */
+const fetchProgress = new Map<string, { cur: number; total: number }>();
+
+const STEP_INDEX: Record<string, number> = {
+  decode: 0,
+  inference: 1,
+  mask: 2,
+  encode: 3,
+};
+
+export const COMPUTE_STEPS = [
+  "解析图片",
+  "AI 识别前景",
+  "生成透明遮罩",
+  "输出 PNG",
+] as const;
+
+/**
+ * onnxruntime 的良性内部提示:部分图节点按设计留在 CPU 执行器、
+ * 非跨域隔离环境回退单线程。它们不影响结果,但走 console.error
+ * 通道,在 Next dev 下会像报错一样被转发到终端 —— 处理期间静音。
+ */
+const ORT_NOISE_PATTERNS = [
+  "VerifyEachNodeIsAssignedToAnEp",
+  "Rerunning with verbose output",
+  "env.wasm.numThreads",
+  "WebAssembly multi-threading is not supported",
+];
+
+function isOrtNoise(args: unknown[]): boolean {
+  return ORT_NOISE_PATTERNS.some((pattern) =>
+    args.some((arg) => typeof arg === "string" && arg.includes(pattern)),
+  );
+}
+
+async function withOrtNoiseSilenced<T>(fn: () => Promise<T>): Promise<T> {
+  const originalError = console.error;
+  const originalWarn = console.warn;
+  console.error = (...args: unknown[]) => {
+    if (!isOrtNoise(args)) originalError(...args);
+  };
+  console.warn = (...args: unknown[]) => {
+    if (!isOrtNoise(args)) originalWarn(...args);
+  };
+  try {
+    return await fn();
+  } finally {
+    console.error = originalError;
+    console.warn = originalWarn;
+  }
+}
+
+/**
+ * 抠图主入口。source 直接传 File/Blob,输出为全分辨率透明 PNG Blob
+ * (mask 会被缩放回原图分辨率)。
+ */
+export async function removeBg(
+  source: Blob,
+  onProgress: (p: ProgressInfo) => void,
+): Promise<Blob> {
+  // 只在用户事件触发的调用栈里动态导入,永不进 SSR / 首屏 chunk
+  const { removeBackground } = await import("@imgly/background-removal");
+
+  return withOrtNoiseSilenced(() =>
+    removeBackground(source, {
+      device: "gpu", // 内部检测 WebGPU,不支持自动回退 wasm
+      model: "isnet_quint8", // ~42MB,首载友好;输出质量已足够
+      output: { format: "image/png", quality: 1 },
+      progress: (key: string, current: number, total: number) => {
+        if (key.startsWith("fetch:")) {
+          fetchProgress.set(key, { cur: current, total });
+          let cur = 0;
+          let tot = 0;
+          for (const v of fetchProgress.values()) {
+            cur += v.cur;
+            tot += v.total;
+          }
+          onProgress({ stage: "download", pct: tot > 0 ? cur / tot : 0 });
+        } else {
+          const step = key.split(":")[1] ?? "";
+          onProgress({ stage: "compute", stepIndex: STEP_INDEX[step] ?? 0 });
+        }
+      },
+    }),
+  );
+}
+
+/** 把库抛出的各种异常形态归类为用户可读的错误码 */
+export function classifyError(err: unknown): ErrorCode {
+  const msg =
+    err instanceof Error ? `${err.name}: ${err.message}` : String(err ?? "");
+  if (
+    /failed to fetch|networkerror|resource metadata|download|enotfound|timeout/i.test(
+      msg,
+    )
+  ) {
+    return "MODEL_DOWNLOAD";
+  }
+  if (/memory|allocat|abort|out of bounds/i.test(msg)) return "MEMORY";
+  return "INFERENCE";
+}
