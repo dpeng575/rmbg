@@ -39,3 +39,5 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+# 自托管模型分块(prepare-models 下载生成)
+public/models/

@@ -1,4 +1,4 @@
-import type { ErrorCode, ProgressInfo } from "@/types";
+import type { ErrorCode, ProgressInfo, StageTimings } from "@/types";
 
 /**
  * @imgly/background-removal 封装 —— 全项目技术核心。
@@ -67,19 +67,33 @@ async function withOrtNoiseSilenced<T>(fn: () => Promise<T>): Promise<T> {
 
 /**
  * 抠图主入口。source 直接传 File/Blob,输出为全分辨率透明 PNG Blob
- * (mask 会被缩放回原图分辨率)。
+ * (mask 会被缩放回原图分辨率)。同时返回各阶段耗时拆分。
  */
 export async function removeBg(
   source: Blob,
   onProgress: (p: ProgressInfo) => void,
-): Promise<Blob> {
+): Promise<{ blob: Blob; timings: StageTimings }> {
   // 只在用户事件触发的调用栈里动态导入,永不进 SSR / 首屏 chunk
   const { removeBackground } = await import("@imgly/background-removal");
 
-  return withOrtNoiseSilenced(() =>
+  // —— 阶段计时:compute 里程碑(0=decode 1=inference 2=mask 3=encode)
+  //    首次进入某阶段时记录时间戳,区间差归入上一阶段的耗时桶 ——
+  const timings: StageTimings = {
+    downloadMs: 0,
+    decodeMs: 0,
+    inferenceMs: 0,
+    outputMs: 0,
+  };
+  const stageStart = performance.now();
+  const marks = new Map<number, number>(); // stepIndex → 首次进入时间戳
+
+  const blob = await withOrtNoiseSilenced(() =>
     removeBackground(source, {
       device: "gpu", // 内部检测 WebGPU,不支持自动回退 wasm
       model: "isnet_quint8", // ~42MB,首载友好;输出质量已足够
+      // 自托管模型与 ORT 运行时(见 scripts/prepare-models.mjs)。
+      // 库内部用 new URL(name, publicPath) 拼地址,必须是绝对 URL
+      publicPath: `${window.location.origin}/models/`,
       output: { format: "image/png", quality: 1 },
       progress: (key: string, current: number, total: number) => {
         if (key.startsWith("fetch:")) {
@@ -93,11 +107,32 @@ export async function removeBg(
           onProgress({ stage: "download", pct: tot > 0 ? cur / tot : 0 });
         } else {
           const step = key.split(":")[1] ?? "";
-          onProgress({ stage: "compute", stepIndex: STEP_INDEX[step] ?? 0 });
+          const idx = STEP_INDEX[step] ?? 0;
+          if (!marks.has(idx)) {
+            const now = performance.now();
+            marks.set(idx, now);
+            if (idx === 0) timings.downloadMs = now - stageStart;
+            else if (idx === 1)
+              timings.decodeMs = now - marks.get(0)!;
+            else if (idx === 2)
+              timings.inferenceMs = now - marks.get(1)!;
+            else if (idx === 3)
+              timings.outputMs += now - marks.get(2)!;
+          }
+          onProgress({ stage: "compute", stepIndex: idx });
         }
       },
     }),
   );
+
+  // encode(4/4) 里程碑到 promise resolve 之间的收尾也计入输出阶段
+  if (marks.has(3)) {
+    timings.outputMs += performance.now() - marks.get(3)!;
+  } else if (marks.has(2)) {
+    timings.outputMs += performance.now() - marks.get(2)!;
+  }
+
+  return { blob, timings };
 }
 
 /** 把库抛出的各种异常形态归类为用户可读的错误码 */

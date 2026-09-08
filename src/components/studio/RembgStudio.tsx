@@ -126,7 +126,7 @@ export function RembgStudio({ children }: { children?: ReactNode }) {
 
       const startedAt = performance.now();
       try {
-        const resultBlob = await removeBg(blob, (progress) =>
+        const { blob: resultBlob, timings } = await removeBg(blob, (progress) =>
           dispatch({ type: "progress", progress }),
         );
         dispatch({
@@ -140,9 +140,11 @@ export function RembgStudio({ children }: { children?: ReactNode }) {
             elapsedMs: performance.now() - startedAt,
             width,
             height,
+            timings,
           },
         });
       } catch (err) {
+        console.error("[rmbg] raw error:", err);
         dispatch({ type: "failed", code: classifyError(err) });
       }
     },

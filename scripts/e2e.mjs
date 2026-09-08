@@ -13,6 +13,18 @@ await page.goto("http://localhost:3000", {
   timeout: 60_000,
 });
 
+// 断言:跨域隔离生效(WASM 多线程的前提)
+const isolated = await page.evaluate(() => crossOriginIsolated);
+console.log("crossOriginIsolated:", isolated);
+if (!isolated) throw new Error("跨域隔离未生效,COOP/COEP 响应头缺失");
+
+// 断言:模型资源走自托管 /models/,不再请求外部 CDN(先挂监听再触发)
+const modelReqs = [];
+page.on("request", (req) => {
+  const u = req.url();
+  if (u.includes("/models/") || u.includes("staticimgly")) modelReqs.push(u);
+});
+
 // 点击「宠物」示例图
 await page.click('button:has-text("宠物")');
 console.log("clicked sample: pet");
@@ -44,4 +56,10 @@ await page.waitForSelector("text=上传图片");
 console.log("reset to idle OK");
 
 console.log(errors.length ? "console errors:\n" + errors.join("\n") : "no console errors");
+
+const selfHosted = modelReqs.filter((u) => u.includes("/models/")).length;
+const external = modelReqs.filter((u) => u.includes("staticimgly")).length;
+console.log(`model requests: ${selfHosted} self-hosted, ${external} external CDN`);
+if (external > 0) throw new Error("仍有请求打到外部 CDN");
+if (selfHosted === 0) throw new Error("未观测到 /models/ 请求");
 await browser.close();

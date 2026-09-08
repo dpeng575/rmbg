@@ -14,6 +14,16 @@ import {
   formatBytes,
   formatElapsed,
 } from "@/lib/download";
+import type { StageTimings } from "@/types";
+
+function formatTimings(t: StageTimings): string {
+  const parts: string[] = [];
+  if (t.downloadMs > 100) parts.push(`下载 ${formatElapsed(t.downloadMs)}`);
+  if (t.decodeMs > 0) parts.push(`解码 ${formatElapsed(t.decodeMs)}`);
+  if (t.inferenceMs > 0) parts.push(`推理 ${formatElapsed(t.inferenceMs)}`);
+  if (t.outputMs > 0) parts.push(`合成输出 ${formatElapsed(t.outputMs)}`);
+  return parts.join(" · ");
+}
 import type { ResultState } from "@/types";
 
 type ViewMode = "compare" | "original" | "result";
@@ -146,6 +156,9 @@ export function ResultView({ result, onReset }: Props) {
 
         <p className="font-mono text-xs text-ink-faint">
           免费 · 全分辨率 · {formatBytes(result.resultSize)} · 透明背景
+        </p>
+        <p className="font-mono text-xs text-ink-faint/80">
+          {formatTimings(result.timings)}
         </p>
 
         {/* 评分 */}

@@ -6,7 +6,9 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "prepare:models": "node scripts/prepare-models.mjs",
+    "postinstall": "node scripts/prepare-models.mjs || echo '⚠ 模型下载失败(网络原因),install 已完成;联网后请手动运行: npm run prepare:models'"
   },
   "dependencies": {
     "@imgly/background-removal": "^1.7.0",

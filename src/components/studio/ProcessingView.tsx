@@ -65,7 +65,8 @@ export function ProcessingView({ phase, progress, file }: Props) {
           <>
             <h2 className="text-xl font-semibold">正在抠图…</h2>
             <p className="mt-2 text-sm text-ink-soft">
-              模型就绪,正在本地推理。视设备性能,通常需要几秒钟。
+              模型就绪,正在本地推理。速度取决于设备性能与图片大小,
+              约需 5~40 秒,请保持页面在前台。
             </p>
             <ol className="mx-auto mt-8 max-w-xs space-y-3 text-left">
               {COMPUTE_STEPS.map((label, i) => {
