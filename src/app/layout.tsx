@@ -1,27 +1,42 @@
 import type { Metadata, Viewport } from "next";
-import { Bricolage_Grotesque } from "next/font/google";
+import { Manrope } from "next/font/google";
 import "./globals.css";
 
-const display = Bricolage_Grotesque({
-  variable: "--font-display",
+const manrope = Manrope({
+  variable: "--font-manrope",
   subsets: ["latin"],
 });
 
 export const metadata: Metadata = {
-  title: "裁云 rmbg — 一键 AI 抠图,免费 · 浏览器本地处理",
+  metadataBase: new URL("https://switchbg.com"),
+  title: "Photo Background Changer – Free Online Tool | SwitchBG",
   description:
-    "上传图片,AI 在数秒内 100% 自动消除背景,免费输出全分辨率透明 PNG。模型在你的浏览器里运行,图片不上传任何服务器。",
-  applicationName: "裁云 rmbg",
+    "Change the background of any photo in seconds. Free, no signup, no watermark, HD quality. Upload a photo, choose a new background, and download instantly.",
+  alternates: { canonical: "/" },
+  openGraph: {
+    title: "Photo Background Changer – Free Online Tool | SwitchBG",
+    description:
+      "Change the background of any photo in seconds. Free, no signup, no watermark, HD quality.",
+    url: "/",
+    type: "website",
+    siteName: "SwitchBG",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "Photo Background Changer – Free Online Tool | SwitchBG",
+    description:
+      "Change the background of any photo in seconds. Free, no signup, no watermark, HD quality.",
+  },
 };
 
 export const viewport: Viewport = {
-  themeColor: "#faf9f4",
+  themeColor: "#ffffff",
 };
 
 export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
-    <html lang="zh-CN" className={`${display.variable} h-full antialiased`}>
-      <body className="flex min-h-full flex-col bg-paper font-sans text-ink">
+    <html lang="en" className={`${manrope.variable} h-full antialiased`}>
+      <body className="flex min-h-full flex-col bg-background font-sans text-foreground">
         {children}
       </body>
     </html>

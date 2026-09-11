@@ -25,27 +25,27 @@ export const ERROR_COPY: Record<
   { title: string; hint: string }
 > = {
   FORMAT: {
-    title: "不支持的图片格式",
-    hint: "仅支持 JPG、PNG 和 WebP 图片,GIF 等格式请先转换。",
+    title: "Unsupported image format",
+    hint: "Only JPG, PNG and WebP images are supported. Convert GIF or other formats first.",
   },
   SIZE: {
-    title: "文件太大了",
-    hint: "请上传 22MB 以内的图片。",
+    title: "File is too large",
+    hint: "Please upload an image smaller than 22 MB.",
   },
   FETCH_URL: {
-    title: "无法获取链接图片",
-    hint: "该地址可能不允许跨域访问。试试直接的图片地址,或改用本地上传。",
+    title: "Couldn't load the image",
+    hint: "The sample image failed to load. Check your connection and try again.",
   },
   MODEL_DOWNLOAD: {
-    title: "AI 模型下载失败",
-    hint: "请检查网络连接后重试,模型下载完成后会缓存到本地。",
+    title: "AI model download failed",
+    hint: "Check your network connection and retry. The model is cached after the first download.",
   },
   INFERENCE: {
-    title: "处理失败",
-    hint: "请重试,或换一张主体更清晰的图片。",
+    title: "Processing failed",
+    hint: "Please retry, or try a photo with a clearer subject.",
   },
   MEMORY: {
-    title: "内存不足",
-    hint: "图片尺寸过大,请换一张较小的图片再试。",
+    title: "Not enough memory",
+    hint: "The image is very large. Try a smaller photo.",
   },
 };

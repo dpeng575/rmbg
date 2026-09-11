@@ -1,58 +1,95 @@
 @import "tailwindcss";
+@import "tw-animate-css";
+
+@custom-variant dark (&:is(.dark *));
 
 /* ============================================================
-   「纸墨 + 朱砂」设计系统
-   暖纸白底 · 墨色文字 · 朱砂点缀 · 棋盘格 = 透明的品牌母题
+   SwitchBG 主题 — 方案 A(light)
+   冷色工具站:白底 + 深灰蓝文字 + 海军蓝 primary + 青绿 accent(CTA)
    ============================================================ */
-@theme {
-  /* —— 色板 —— */
-  --color-paper: #faf9f4; /* 暖纸白,页面底色 */
-  --color-panel: #ffffff; /* 卡片面板 */
-  --color-ink: #17150f; /* 墨黑,主文字 */
-  --color-ink-soft: #6e6a5e; /* 次级文字 */
-  --color-ink-faint: #a8a496; /* 弱化文字 */
-  --color-vermilion: #e8442e; /* 朱砂,主强调 */
-  --color-vermilion-deep: #c22f1d; /* 朱砂深,hover */
-  --color-vermilion-wash: #fbece9; /* 朱砂浅底 */
-  --color-mist: #eceae2; /* 雾灰,浅背景/分隔 */
-  --color-mist-deep: #dcd8ca; /* 雾灰深,虚线描边 */
-  --color-jade: #157145; /* 石绿,成功态 */
-  --color-jade-wash: #e9f4ee;
+:root {
+  --background: 0 0% 100%;
+  --foreground: 222 47% 11%; /* 深灰蓝文字 */
+  --card: 0 0% 100%;
+  --card-foreground: 222 47% 11%;
+  --popover: 0 0% 100%;
+  --popover-foreground: 222 47% 11%;
+  --primary: 221 83% 53%; /* #1D4ED8 海军蓝 */
+  --primary-foreground: 0 0% 100%;
+  --secondary: 210 40% 96%;
+  --secondary-foreground: 222 47% 11%;
+  --muted: 210 40% 96%;
+  --muted-foreground: 215 16% 45%;
+  --accent: 160 84% 39%; /* #10B981 青绿 CTA */
+  --accent-foreground: 0 0% 100%;
+  --destructive: 0 84% 60%; /* 报错红 */
+  --destructive-foreground: 210 40% 98%;
+  --border: 214 32% 91%;
+  --input: 214 32% 91%;
+  --ring: 221 83% 53%;
+  --radius: 0.75rem;
+}
 
-  /* —— 字体 —— */
-  --font-sans: var(--font-display), ui-sans-serif, system-ui, -apple-system,
-    "PingFang SC", "HarmonyOS Sans SC", "MiSans", "Noto Sans SC",
-    "Microsoft YaHei", sans-serif;
-  --font-mono: ui-monospace, "SF Mono", "Cascadia Code", "IBM Plex Mono",
-    "JetBrains Mono", Menlo, monospace;
+@theme inline {
+  --color-background: hsl(var(--background));
+  --color-foreground: hsl(var(--foreground));
+  --color-card: hsl(var(--card));
+  --color-card-foreground: hsl(var(--card-foreground));
+  --color-popover: hsl(var(--popover));
+  --color-popover-foreground: hsl(var(--popover-foreground));
+  --color-primary: hsl(var(--primary));
+  --color-primary-foreground: hsl(var(--primary-foreground));
+  --color-secondary: hsl(var(--secondary));
+  --color-secondary-foreground: hsl(var(--secondary-foreground));
+  --color-muted: hsl(var(--muted));
+  --color-muted-foreground: hsl(var(--muted-foreground));
+  --color-accent: hsl(var(--accent));
+  --color-accent-foreground: hsl(var(--accent-foreground));
+  --color-destructive: hsl(var(--destructive));
+  --color-destructive-foreground: hsl(var(--destructive-foreground));
+  --color-border: hsl(var(--border));
+  --color-input: hsl(var(--input));
+  --color-ring: hsl(var(--ring));
 
-  /* —— 阴影:版画式利落,而非悬浮感 —— */
-  --shadow-panel: 0 1px 2px rgb(23 21 15 / 0.04), 0 10px 28px rgb(23 21 15 / 0.06);
-  --shadow-lift: 0 2px 6px rgb(23 21 15 / 0.06), 0 18px 44px rgb(23 21 15 / 0.12);
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 4px);
 
-  /* —— 动画(全部合成器友好:transform/opacity/clip-path) —— */
-  --animate-rise: rise 0.7s cubic-bezier(0.22, 1, 0.36, 1) both;
-  --animate-pop: pop 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) both;
-  --animate-wipe: wipe 0.9s cubic-bezier(0.22, 1, 0.36, 1) both;
-  --animate-shimmer: shimmer 1.5s linear infinite;
+  --font-sans:
+    var(--font-manrope), ui-sans-serif, system-ui, -apple-system, "Segoe UI",
+    sans-serif;
+  --font-mono:
+    ui-monospace, "SF Mono", "Cascadia Code", "IBM Plex Mono", Menlo, monospace;
+
+  --animate-accordion-down: accordion-down 0.2s ease-out;
+  --animate-accordion-up: accordion-up 0.2s ease-out;
+  --animate-rise: rise 0.6s cubic-bezier(0.22, 1, 0.36, 1) both;
+  --animate-pop: pop 0.4s cubic-bezier(0.34, 1.56, 0.64, 1) both;
+  --animate-shimmer: shimmer 1.6s linear infinite;
   --animate-breathe: breathe 2.4s ease-in-out infinite;
 }
 
+@keyframes accordion-down {
+  from {
+    height: 0;
+  }
+}
+@keyframes accordion-up {
+  to {
+    height: 0;
+  }
+}
 @keyframes rise {
   from {
     opacity: 0;
-    transform: translateY(20px);
+    transform: translateY(16px);
   }
 }
 @keyframes pop {
   from {
     opacity: 0;
-    transform: scale(0.9);
-  }
-}
-@keyframes wipe {
-  from {
-    clip-path: inset(0 100% 0 0);
+    transform: scale(0.92);
   }
 }
 @keyframes shimmer {
@@ -67,67 +104,30 @@
     opacity: 1;
   }
   50% {
-    transform: scale(0.94);
-    opacity: 0.7;
+    transform: scale(0.95);
+    opacity: 0.72;
   }
 }
 
-/* —— 棋盘格:品牌母题,透明 —— */
+/* —— 棋盘格 = 透明(抠图预览的品牌语言) —— */
 @utility checkerboard {
   background-color: #fff;
-  background-image: linear-gradient(
-      45deg,
-      var(--color-mist) 25%,
-      transparent 25% 75%,
-      var(--color-mist) 75%
-    ),
-    linear-gradient(
-      45deg,
-      var(--color-mist) 25%,
-      transparent 25% 75%,
-      var(--color-mist) 75%
-    );
+  background-image:
+    linear-gradient(45deg, #e2e8f0 25%, transparent 25% 75%, #e2e8f0 75%),
+    linear-gradient(45deg, #e2e8f0 25%, transparent 25% 75%, #e2e8f0 75%);
   background-size: 16px 16px;
   background-position: 0 0, 8px 8px;
 }
 @utility checkerboard-fine {
   background-color: #fff;
-  background-image: linear-gradient(
-      45deg,
-      var(--color-mist) 25%,
-      transparent 25% 75%,
-      var(--color-mist) 75%
-    ),
-    linear-gradient(
-      45deg,
-      var(--color-mist) 25%,
-      transparent 25% 75%,
-      var(--color-mist) 75%
-    );
+  background-image:
+    linear-gradient(45deg, #e2e8f0 25%, transparent 25% 75%, #e2e8f0 75%),
+    linear-gradient(45deg, #e2e8f0 25%, transparent 25% 75%, #e2e8f0 75%);
   background-size: 10px 10px;
   background-position: 0 0, 5px 5px;
 }
-/* 进度条专用:12px 周期 = 6px 方格,恰好被 12px(h-3)条高整除,
-   避免棋盘格被高度截断成破碎斜条 */
-@utility checkerboard-bar {
-  background-color: #fff;
-  background-image: linear-gradient(
-      45deg,
-      var(--color-mist) 25%,
-      transparent 25% 75%,
-      var(--color-mist) 75%
-    ),
-    linear-gradient(
-      45deg,
-      var(--color-mist) 25%,
-      transparent 25% 75%,
-      var(--color-mist) 75%
-    );
-  background-size: 12px 12px;
-  background-position: 0 0, 6px 6px;
-}
 
-/* —— 高光扫过(当前处理步骤) —— */
+/* —— 处理步骤的高光扫过 —— */
 @utility shimmer-bar {
   background-image: linear-gradient(
     100deg,
@@ -138,14 +138,18 @@
   background-size: 200% 100%;
 }
 
-body {
-  background-color: var(--color-paper);
-  color: var(--color-ink);
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+  body {
+    @apply bg-background text-foreground;
+  }
 }
 
 ::selection {
-  background-color: var(--color-vermilion);
-  color: #fff;
+  background-color: hsl(var(--primary));
+  color: white;
 }
 
 @media (prefers-reduced-motion: reduce) {

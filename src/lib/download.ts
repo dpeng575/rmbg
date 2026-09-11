@@ -1,12 +1,17 @@
-/** 触发浏览器下载结果 PNG */
-export function downloadResult(blob: Blob, originalName: string) {
-  const base = originalName.replace(/\.[^.]+$/, "") || "image";
+/** 触发浏览器下载 */
+export function downloadBlob(blob: Blob, filename: string) {
   const a = document.createElement("a");
   const url = URL.createObjectURL(blob);
   a.href = url;
-  a.download = `${base}-去背景-${Date.now()}.png`;
+  a.download = filename;
   a.click();
   setTimeout(() => URL.revokeObjectURL(url), 10_000);
+}
+
+/** 结果命名:<原文件名>-switchbg.<ext> */
+export function resultFilename(originalName: string, ext: "png" | "jpg") {
+  const base = originalName.replace(/\.[^.]+$/, "") || "image";
+  return `${base}-switchbg.${ext}`;
 }
 
 export function formatBytes(bytes: number): string {
@@ -16,6 +21,6 @@ export function formatBytes(bytes: number): string {
 }
 
 export function formatElapsed(ms: number): string {
-  if (ms >= 1000) return `${(ms / 1000).toFixed(1)} 秒`;
-  return `${Math.round(ms)} 毫秒`;
+  if (ms >= 1000) return `${(ms / 1000).toFixed(1)} s`;
+  return `${Math.round(ms)} ms`;
 }

@@ -24,10 +24,10 @@ const STEP_INDEX: Record<string, number> = {
 };
 
 export const COMPUTE_STEPS = [
-  "解析图片",
-  "AI 识别前景",
-  "生成透明遮罩",
-  "输出 PNG",
+  "Decoding image",
+  "AI cutout",
+  "Building mask",
+  "Encoding PNG",
 ] as const;
 
 /**

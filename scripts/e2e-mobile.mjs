@@ -1,10 +1,10 @@
-// 移动端视口 + 格式校验错误路径验证
+// 移动端视口 + 格式校验错误路径验证(SwitchBG 流程)
 import { chromium } from "playwright";
 import { writeFileSync, rmSync } from "node:fs";
 
 const browser = await chromium.launch({ channel: "chrome" });
 
-// —— 移动端 ——
+// —— 移动端 390px:首页布局 ——
 const mctx = await browser.newContext({
   viewport: { width: 390, height: 844 },
   isMobile: true,
@@ -14,27 +14,32 @@ const mctx = await browser.newContext({
 });
 const mpage = await mctx.newPage();
 await mpage.goto("http://localhost:3000", { waitUntil: "domcontentloaded" });
-await mpage.waitForSelector("text=上传图片", { timeout: 60_000 });
+await mpage.waitForSelector("text=Upload a photo", { timeout: 60_000 });
+await mpage.waitForTimeout(800);
 await mpage.screenshot({ path: "shot-mobile.png", fullPage: true });
 console.log("mobile screenshot saved");
 
-// —— 桌面:错误路径(伪造 GIF)——
+// —— 移动端完整流程:示例 → 抠图 → 选背景 ——
+await mpage.click('button:has-text("Product")');
+await mpage.waitForSelector("text=Pick a background below", { timeout: 360_000 });
+console.log("mobile: cutout ready");
+await mpage.click('button[title="White"]');
+await mpage.waitForSelector('img[alt="Photo with new background"]', {
+  timeout: 30_000,
+});
+console.log("mobile: composite shown");
+await mpage.screenshot({ path: "shot-mobile-result.png" });
+
+// —— 桌面:格式校验错误路径 ——
 const ctx = await browser.newContext({ viewport: { width: 1440, height: 900 } });
 const page = await ctx.newPage();
 await page.goto("http://localhost:3000", { waitUntil: "domcontentloaded" });
-await page.waitForSelector("text=上传图片", { timeout: 60_000 });
+await page.waitForSelector("text=Upload a photo", { timeout: 60_000 });
 
 writeFileSync("/tmp/fake.gif", "GIF89a");
 await page.setInputFiles('input[type="file"]', "/tmp/fake.gif");
-await page.waitForSelector("text=不支持的图片格式", { timeout: 15_000 });
+await page.waitForSelector("text=Unsupported image format", { timeout: 15_000 });
 console.log("format error banner shown");
-await page.screenshot({ path: "shot-error-format.png" });
-
-// —— 错误 URL 路径 ——
-await page.fill('input[type="url"]', "https://example.com/nonexistent.jpg");
-await page.click('button:has-text("获取")');
-await page.waitForSelector("text=无法获取链接图片", { timeout: 30_000 });
-console.log("fetch-url error banner shown");
 
 rmSync("/tmp/fake.gif");
 console.log("done");

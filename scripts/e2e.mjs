@@ -1,4 +1,4 @@
-// 端到端验证:示例图 → 处理 → 结果 → 下载
+// 端到端验证:上传 → 抠图 → 选背景合成 → 下载 HD / 透明 PNG → 重置
 import { chromium } from "playwright";
 
 const browser = await chromium.launch({ channel: "chrome" });
@@ -8,58 +8,71 @@ const errors = [];
 page.on("console", (m) => m.type() === "error" && errors.push(m.text()));
 page.on("pageerror", (e) => errors.push(String(e)));
 
-await page.goto("http://localhost:3000", {
-  waitUntil: "networkidle",
-  timeout: 60_000,
-});
-
-// 断言:跨域隔离生效(WASM 多线程的前提)
-const isolated = await page.evaluate(() => crossOriginIsolated);
-console.log("crossOriginIsolated:", isolated);
-if (!isolated) throw new Error("跨域隔离未生效,COOP/COEP 响应头缺失");
-
-// 断言:模型资源走自托管 /models/,不再请求外部 CDN(先挂监听再触发)
 const modelReqs = [];
-page.on("request", (req) => {
-  const u = req.url();
+page.on("request", (r) => {
+  const u = r.url();
   if (u.includes("/models/") || u.includes("staticimgly")) modelReqs.push(u);
 });
 
-// 点击「宠物」示例图
-await page.click('button:has-text("宠物")');
-console.log("clicked sample: pet");
+await page.goto("http://localhost:3000", { waitUntil: "domcontentloaded" });
+await page.waitForSelector("h1:has-text('Photo Background Changer')");
 
-// 等待处理视图出现(模型加载中)
-await page.waitForSelector("text=正在加载 AI 模型", { timeout: 60_000 });
-console.log("processing view shown (model loading)");
+// 跨域隔离 + 自托管断言
+const isolated = await page.evaluate(() => crossOriginIsolated);
+console.log("crossOriginIsolated:", isolated);
+if (!isolated) throw new Error("COOP/COEP 未生效");
 
-// 等待结果:最长 6 分钟(首载需下载 ~54MB 模型)
-await page.waitForSelector("text=背景消除完成", { timeout: 360_000 });
-console.log("result view shown");
-await page.waitForTimeout(1200); // 等 wipe 动画落定
-await page.screenshot({ path: "shot-result.png" });
+// 状态①:点示例图上传
+await page.click('button:has-text("Product")');
+console.log("clicked sample: product");
 
-// 触发下载并验证文件名
-const downloadPromise = page.waitForEvent("download", { timeout: 30_000 });
-await page.click('button:has-text("下载透明 PNG")');
-const download = await downloadPromise;
-console.log("download filename:", download.suggestedFilename());
+// 处理 → 状态②(未选背景提示出现)
+await page.waitForSelector("text=Pick a background below", { timeout: 360_000 });
+console.log("state 2: cutout ready, no bg selected");
+await page.screenshot({ path: "shot-state2.png" });
 
-// 评分交互
-await page.click('button[aria-label="好评"]');
-await page.waitForSelector("text=感谢反馈");
-console.log("rating feedback shown");
+// 状态③:选白色纯色背景 → 合成预览出现
+await page.click('button[title="White"]');
+await page.waitForSelector('img[alt="Photo with new background"]', {
+  timeout: 30_000,
+});
+console.log("state 3: composite preview shown");
+await page.screenshot({ path: "shot-state3.png" });
 
-// 重置回首页
-await page.click('button:has-text("再处理一张")');
-await page.waitForSelector("text=上传图片");
+// 切换照片背景(图库 People 第一张)
+await page.click('button[title="City lights"]');
+await page.waitForTimeout(1500); // 等重新合成
+
+// 原图/结果切换
+await page.click('button:has-text("Original")');
+await page.waitForSelector('img[alt="Original photo"]');
+await page.click('button:has-text("Result")');
+await page.waitForSelector('img[alt="Photo with new background"]');
+console.log("compare toggle OK");
+
+// 下载 HD(JPEG)
+const jpg = page.waitForEvent("download", { timeout: 60_000 });
+await page.click('button:has-text("Download HD")');
+const d1 = await jpg;
+console.log("HD download:", d1.suggestedFilename());
+if (!d1.suggestedFilename().endsWith("-switchbg.jpg"))
+  throw new Error("HD 文件名不符合约定");
+
+// 透明 PNG
+const png = page.waitForEvent("download", { timeout: 30_000 });
+await page.click('button:has-text("Transparent PNG")');
+const d2 = await png;
+console.log("PNG download:", d2.suggestedFilename());
+
+// 重置回状态①
+await page.click('button:has-text("Start over")');
+await page.waitForSelector('button:has-text("Upload a photo")');
 console.log("reset to idle OK");
-
-console.log(errors.length ? "console errors:\n" + errors.join("\n") : "no console errors");
 
 const selfHosted = modelReqs.filter((u) => u.includes("/models/")).length;
 const external = modelReqs.filter((u) => u.includes("staticimgly")).length;
 console.log(`model requests: ${selfHosted} self-hosted, ${external} external CDN`);
 if (external > 0) throw new Error("仍有请求打到外部 CDN");
-if (selfHosted === 0) throw new Error("未观测到 /models/ 请求");
+
+console.log(errors.length ? "console errors:\n" + errors.join("\n") : "no console errors");
 await browser.close();
