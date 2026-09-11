@@ -1,0 +1,412 @@
+{
+  "skillProvenance": {
+    "name": "solo-design"
+  },
+  "project": {
+    "resolvedLane": "existing_edit_add_comparison",
+    "mutationMode": "in-place-regenerate",
+    "sourceProjectLaneHeritage": {
+      "originLane": "free_exploration",
+      "note": "本项目由 free_exploration 车道创建;本轮是画布触发的 page-index 原地重新生成(用户明确指定覆盖原页面,非对比页)。"
+    },
+    "selectedIntentWorkflowRead": true,
+    "intentProfile": {
+      "caseFamily": "free_exploration",
+      "operatingMode": "free-explore",
+      "surface": "page",
+      "sourceType": "existing-nextjs-codebase-redesign-reference",
+      "routingReason": "第一轮:remove.bg 式工具站首页重设计为苹果官网风格,走 free_exploration 单页快车道。本轮:画布指令明确要求原地重新生成 page-index(重生成原页面措辞,豁免对比页路径),走 existing_edit_add_comparison 的 Modify existing pages 原地编辑分支。"
+    },
+    "deviceType": "desktop",
+    "contextRequirementsLoaded": [
+      {
+        "path": "shared-runtime/runtime-boundaries/lane-runtime-contracts.md",
+        "readStatus": "loaded",
+        "bodyRead": true
+      },
+      {
+        "path": "shared-runtime/agent-dispatch-runtime/lane-dispatch-index.md",
+        "readStatus": "loaded",
+        "bodyRead": true
+      },
+      {
+        "path": "delivery-quality/page-rendering-quality-gate.md",
+        "readStatus": "loaded",
+        "bodyRead": true
+      },
+      {
+        "path": "delivery-quality/design-artifact-validation.md",
+        "readStatus": "loaded",
+        "bodyRead": true
+      },
+      {
+        "path": "delivery-quality/delivery-evidence-contract.md",
+        "readStatus": "loaded",
+        "bodyRead": true
+      },
+      {
+        "path": "visual-experience/visual-experience-guidelines.md",
+        "readStatus": "loaded",
+        "bodyRead": true
+      }
+    ],
+    "contextReadScope": {
+      "mainAgent": {
+        "forbiddenReads": [
+          "other intent-workflows/**",
+          "Sub-Agent implementation files before dispatch"
+        ]
+      },
+      "pageSubAgent": {
+        "allowedReads": [
+          "current lane page runtime guide",
+          "current lane dispatch contract excerpt",
+          "current Page Packet",
+          "supplementaryReads[] only"
+        ],
+        "forbiddenReads": [
+          "SKILL.md full re-read",
+          "other intent-workflows/**",
+          "full runtime-orchestration-summary.json unless explicitly sliced"
+        ]
+      },
+      "readScopeLedgerWriter": "shared-runtime/deterministic-tooling/build-page-dispatch-manifest.mjs"
+    },
+    "validationRunDiscipline": {
+      "maxFullValidationRuns": 2,
+      "softWarningsTriggerRepair": false,
+      "blockingRepairMode": "targeted-once",
+      "forbiddenRepairTriggers": [
+        "soft-warning-only",
+        "provenance-warning-only",
+        "style-warning-only"
+      ]
+    },
+    "lowValueCallWatchdog": {
+      "applies": true,
+      "noProgressSignals": [
+        "no_tool_call",
+        "no_artifact_diff",
+        "no_structured_decision"
+      ],
+      "noProgressNextAction": "enter_readiness_or_blocked_summary"
+    },
+    "cssPreflightEvidence": {
+      "applies": true,
+      "status": "passed",
+      "command": "node /Users/penghan/.trae/builtin/design/default/skills/solo-design/shared-runtime/deterministic-tooling/apply-html-head-contract.mjs /Users/penghan/projects/nextjs-projects/rmbg/caiyun-apple-redesign/colors_and_type.css /Users/penghan/projects/nextjs-projects/rmbg/caiyun-apple-redesign/.preflight/preflight.html --title=\"Preflight\" --lang=zh-CN --prefix=cy",
+      "brandPrefix": "cy",
+      "checks": {
+        "themeVars": "present",
+        "semanticTokenFallback": "present",
+        "themeInline": "present",
+        "tailwindCdn": "present",
+        "htmlClass": "present",
+        "semanticMappings": "resolved"
+      },
+      "retryCount": 0,
+      "blockingReason": null
+    },
+    "styleContinuityAnchors": [
+      "色彩系统：近黑 #1d1d1f 大标题 + #f5f5f7 灰阶分区 + 纯白底，唯一品牌蓝 #0071e3（深底亮蓝 #2997ff 仅用于黑卡链接），层级灰 #6e6e73/#86868b，hairline #d2d2d7 仅用于导航底与页脚分隔",
+      "版式语言：apple.com 首页语法——居中均布纯文字导航（无按钮）、Hero 大字+无框大视觉直接坐在背景上、2×2 大卡网格（白/黑交替、卡内居中标题+full-bleed 大图）、footnote 小字规格、目录式多栏页脚",
+      "形状系统：卡片 18px 圆角色块分区（无描边无阴影）、药丸 980px 仅用于 CTA，无其他装饰形",
+      "排版系统：SF Pro/PingFang 栈，Display 56-80px/600/-0.03em/1.1，卡标题 24-28px/600，正文 17px/1.6，footnote 12px",
+      "间距系统：版心 min(1080px, 100%-44px)，卡网格 gap 12px（Apple 标准 12px 卡距），卡内文字区 padding 48px 40px",
+      "组件语言：药丸 CTA（高 50px）、蓝色文字链接+chevron-right、无框产品大图、目录式页脚；禁止导航按钮、编号列表、图标三连、缩略图信息行、四格规格表",
+      "图像语言：真实抠图 PNG 作为大视觉主体，棋盘格仅作 hero 透明隐喻，图标仅 Lucide menu（移动端）与 chevron-right",
+      "交互基调：180ms ease，hover 仅明度步进+下划线，卡片不可点无 hover 位移，focus-visible 2px 蓝环，prefers-reduced-motion 降级"
+    ],
+    "dispatchPreflightManifest": [
+      {
+        "recorded_at": "2026-09-08T07:03:21.901Z",
+        "generatedBy": "build-page-dispatch-manifest.mjs",
+        "packetType": "FreePagePacket",
+        "laneContract": {
+          "resolvedLane": "free_exploration",
+          "packetType": "FreePagePacket",
+          "pageRuntimeGuide": "intent-workflows/intent-page-free-exploration/free-exploration-page-runtime.md",
+          "dispatchContract": "intent-workflows/intent-page-free-exploration/dispatch-contract.md"
+        },
+        "taskLinePresent": true,
+        "outputPathPresent": true,
+        "sharedTemplate": "intent-workflows/intent-page-free-exploration/free-exploration-page-runtime.md",
+        "nodeId": "page-index",
+        "htmlSrc": "pages/index.html",
+        "supplementaryReads": [],
+        "allowedWritePaths": [
+          "pages/index.html",
+          "assets/"
+        ],
+        "forbiddenWriteRoots": [
+          "*.design",
+          "runtime-orchestration-summary.json",
+          "validation-report.json",
+          "finish-readiness-report.json",
+          "restore-contract-report.json",
+          "page-generation-summary.json"
+        ],
+        "toolPolicy": {
+          "todoWriteAllowed": false,
+          "validationScriptsAllowed": false,
+          "previewAllowed": false,
+          "helperScriptsAllowed": false,
+          "designFileWriteAllowed": false,
+          "allowedWritePaths": [
+            "pages/index.html",
+            "assets/"
+          ]
+        },
+        "skillRuntime": {
+          "skillDir": "/Users/penghan/.trae/builtin/design/default/skills/solo-design",
+          "deterministicToolDir": "/Users/penghan/.trae/builtin/design/default/skills/solo-design/shared-runtime/deterministic-tooling",
+          "toolPaths": {
+            "applyHtmlHeadContract": "/Users/penghan/.trae/builtin/design/default/skills/solo-design/shared-runtime/deterministic-tooling/apply-html-head-contract.mjs",
+            "recordDispatchCompletion": "/Users/penghan/.trae/builtin/design/default/skills/solo-design/shared-runtime/deterministic-tooling/record-dispatch-completion.mjs",
+            "buildPageDispatchManifest": "/Users/penghan/.trae/builtin/design/default/skills/solo-design/shared-runtime/deterministic-tooling/build-page-dispatch-manifest.mjs",
+            "validateDesignWorkspace": "/Users/penghan/.trae/builtin/design/default/skills/solo-design/shared-runtime/deterministic-tooling/validate-design-workspace.mjs",
+            "validateFinishReadiness": "/Users/penghan/.trae/builtin/design/default/skills/solo-design/shared-runtime/deterministic-tooling/validate-finish-readiness.mjs",
+            "validateRestoreContract": "/Users/penghan/.trae/builtin/design/default/skills/solo-design/shared-runtime/deterministic-tooling/validate-restore-contract.mjs"
+          },
+          "requiredForPageSubAgent": [
+            "applyHtmlHeadContract",
+            "recordDispatchCompletion"
+          ],
+          "pathInjection": "absolute",
+          "pathContract": "Do not use {SKILL_DIR} placeholders inside Page Sub-Agent packets; use toolPaths.* absolute paths.",
+          "commandTemplates": {
+            "recordDispatchCompletion": "node '/Users/penghan/.trae/builtin/design/default/skills/solo-design/shared-runtime/deterministic-tooling/record-dispatch-completion.mjs' '/Users/penghan/projects/nextjs-projects/rmbg/caiyun-apple-redesign' --node-id='page-index' --html-src='pages/index.html' --status=completed --changed-files=<comma-separated-project-relative-files> --trace-digest=<main-agent-runtime-trace-digest> --tool-ledger-json=<tool-ledger-json-or-file>"
+          }
+        },
+        "cssFilePath": "/Users/penghan/projects/nextjs-projects/rmbg/caiyun-apple-redesign/colors_and_type.css",
+        "htmlFilePath": "/Users/penghan/projects/nextjs-projects/rmbg/caiyun-apple-redesign/pages/index.html",
+        "brandPrefix": "cy",
+        "aestheticsMode": "free-explore",
+        "toolDisciplineBlockPresent": true,
+        "fillHtmlHeadCommand": "node '/Users/penghan/.trae/builtin/design/default/skills/solo-design/shared-runtime/deterministic-tooling/apply-html-head-contract.mjs' '/Users/penghan/projects/nextjs-projects/rmbg/caiyun-apple-redesign/colors_and_type.css' '/Users/penghan/projects/nextjs-projects/rmbg/caiyun-apple-redesign/pages/index.html' --title='首页 · Apple 风格重设计' --lang='zh-CN' --prefix='cy' --replace-head",
+        "headFillMode": "replace-head-after-body",
+        "viewportMode": "document-scroll",
+        "completionSchemaExpected": "compact",
+        "restoreFields": null,
+        "restoreContractStatus": null,
+        "restoreCompactPacket": null,
+        "deterministicCommands": null,
+        "sourceAuthorityLock": null,
+        "preDispatchFileHashes": {
+          "caiyun-apple-redesign.design": "ce4369d29441f8ceee2caeef3fb2ecf6197fa3bd44bb9a463fcc6142e88bdb04"
+        },
+        "contextPreflight": {
+          "workflowPath": "intent-workflows/intent-page-free-exploration/INTENT_WORKFLOW.md",
+          "requiredContextFiles": [
+            "shared-runtime/runtime-boundaries/lane-runtime-contracts.md",
+            "shared-runtime/agent-dispatch-runtime/lane-dispatch-index.md",
+            "delivery-quality/page-rendering-quality-gate.md",
+            "delivery-quality/design-artifact-validation.md",
+            "delivery-quality/delivery-evidence-contract.md",
+            "visual-experience/visual-experience-guidelines.md"
+          ],
+          "optionalContextFiles": [],
+          "passed": true
+        },
+        "pageSliceOnly": true,
+        "requiredFieldsPresent": true,
+        "missingFields": [],
+        "fillHtmlHeadCommandValid": true,
+        "mobileNavigation": {
+          "required": false,
+          "appliesToThisPage": false,
+          "canonicalHtmlIncluded": false,
+          "missingFields": []
+        },
+        "persistedToSummary": true,
+        "taskQueryAudited": false,
+        "proofSource": "summary-only",
+        "largeWorkflowFilesInTaskQuery": null
+      }
+    ],
+    "readScopeLedger": [
+      {
+        "actor": "page-sub-agent",
+        "lane": "free_exploration",
+        "path": "intent-workflows/intent-page-free-exploration/free-exploration-page-runtime.md",
+        "reason": "page runtime guide",
+        "scopeClass": "page-runtime",
+        "declaredBeforeRead": true,
+        "recordedAt": "2026-09-07T12:18:17.482Z",
+        "nodeId": "page-index",
+        "htmlSrc": "pages/index.html"
+      },
+      {
+        "actor": "page-sub-agent",
+        "lane": "free_exploration",
+        "path": "intent-workflows/intent-page-free-exploration/dispatch-contract.md",
+        "reason": "dispatch contract",
+        "scopeClass": "dispatch-contract",
+        "declaredBeforeRead": true,
+        "recordedAt": "2026-09-07T12:18:17.482Z",
+        "nodeId": "page-index",
+        "htmlSrc": "pages/index.html"
+      }
+    ],
+    "mainAgentPostDispatchMutations": [
+      {
+        "files": [
+          "caiyun-apple-redesign.design"
+        ],
+        "reason": "page-index 重做派发完成后，设计画布宿主因用户打开画布自动保存了 .design 节点的 canvas 布局字段（画布外部写入，非主代理命令）。主代理核实后登记此变更证据：.design 数据结构未变（1 页面节点 + 6 图片节点），仅画布坐标由宿主回写。",
+        "recordedAt": "2026-09-08T00:00:00.000Z",
+        "source": "host-canvas-auto-save"
+      }
+    ],
+    "expectedDispatches": [
+      {
+        "nodeId": "page-index",
+        "pageId": "page-index",
+        "targetPageId": "page-index",
+        "htmlSrc": "pages/index.html",
+        "packetType": "FreePagePacket",
+        "status": "completed",
+        "changedFiles": [
+          "pages/index.html"
+        ],
+        "toolCallLedger": {
+          "source": "main-agent-runtime-trace",
+          "traceDigest": "page-index-apple-regen",
+          "todoWriteCalls": 0,
+          "previewCalls": 0,
+          "validationScriptCalls": 0,
+          "helperScriptWrites": 0
+        },
+        "recordedAt": "2026-09-08T07:22:42.208Z",
+        "source": "record-dispatch-completion.mjs"
+      }
+    ],
+    "validationHistory": [
+      {
+        "reportPath": "validation-report.json",
+        "reportHash": "773743adf204baa0ee7684c8b0ec69ae19e3d316f20e9b2f037e475483cf46d3",
+        "checkedAt": "2026-09-08T07:22:42.458Z",
+        "success": false,
+        "exitCode": 1,
+        "renderBlockingErrorCount": 1,
+        "repairPlanHints": [
+          "hardcoded-color-in-body"
+        ],
+        "errorSignatures": [
+          {
+            "errorClass": "artifact-readiness",
+            "normalized": "[dispatch-changed-files] pages/index.html: controlled file changed after dispatch preflight without mainAgentPostDispatchMutations evidence: caiyun-apple-redesign.design",
+            "signature": "4b11c597b67bf8fe24d5164df4162590884698151a7603aeb19527c17923e6a2"
+          }
+        ],
+        "terminalState": null
+      },
+      {
+        "reportPath": "validation-report.json",
+        "reportHash": "f9e9501b14825b82b3c0b8a4e1c23c2f6bb491c4869d566dc2b3d959e81b1712",
+        "checkedAt": "2026-09-08T07:35:49.699Z",
+        "success": true,
+        "exitCode": 0,
+        "renderBlockingErrorCount": 0,
+        "repairPlanHints": [
+          "hardcoded-color-in-body"
+        ],
+        "errorSignatures": [],
+        "terminalState": null
+      }
+    ],
+    "validationRepairLedger": [
+      {
+        "failedReportPath": "validation-report.json",
+        "failedReportHash": "773743adf204baa0ee7684c8b0ec69ae19e3d316f20e9b2f037e475483cf46d3",
+        "repairWorkflowReadPath": "intent-workflows/intent-project-mutation/main-agent-repair-workflow.md",
+        "repairStartedAt": "2026-09-08T07:32:04.451Z",
+        "repairEntryStatus": "revalidated-success",
+        "ownerTriage": [
+          {
+            "owner": "sub-agent",
+            "errorClass": "hardcoded-color-in-body",
+            "affectedFiles": [
+              "index.html"
+            ],
+            "repairScope": "targeted-token-replace",
+            "strategy": "targeted_token_replace_once"
+          }
+        ],
+        "repairPlanHints": [
+          {
+            "errorClass": "hardcoded-color-in-body",
+            "owner": "sub-agent",
+            "repairScope": "targeted-token-replace",
+            "strategy": "targeted_token_replace_once",
+            "affectedFiles": [
+              "index.html"
+            ],
+            "repairReportPath": null,
+            "repairAlreadyAttempted": false,
+            "allowSourceRead": "no-full-html-read",
+            "maxValidationRuns": 2
+          }
+        ],
+        "repairActions": [
+          {
+            "owner": "main-agent",
+            "errorClass": "artifact-readiness",
+            "affectedFiles": [
+              "caiyun-apple-redesign.design"
+            ],
+            "action": "record_post_dispatch_mutation_evidence",
+            "observedFileHashes": [
+              {
+                "path": "caiyun-apple-redesign.design",
+                "hash": "66c0d3fbb84c47b3891818e30a98d446aa7df384c39ef7a9673ec1ea1baf9ecb"
+              }
+            ],
+            "preEditFileHashes": [],
+            "postEditFileHashes": [],
+            "repairOwnedFields": [
+              "artifact-readiness"
+            ],
+            "recordedAt": "2026-09-08T07:35:13.575Z",
+            "repairActionTableRequired": true
+          }
+        ],
+        "revalidationReportPath": "validation-report.json",
+        "revalidationReportHash": "f9e9501b14825b82b3c0b8a4e1c23c2f6bb491c4869d566dc2b3d959e81b1712",
+        "revalidationSuccess": true,
+        "blockedReason": null,
+        "revalidationRecordedAt": "2026-09-08T07:35:49.775Z"
+      }
+    ],
+    "repairEntryEvidence": [
+      {
+        "failedReportPath": "validation-report.json",
+        "failedReportHash": "773743adf204baa0ee7684c8b0ec69ae19e3d316f20e9b2f037e475483cf46d3",
+        "repairWorkflowReadPath": "intent-workflows/intent-project-mutation/main-agent-repair-workflow.md",
+        "repairStartedAt": "2026-09-08T07:32:04.451Z",
+        "ledgerIndex": 0,
+        "ownerTriageCount": 1,
+        "repairActionCount": 1,
+        "revalidationReportPath": "validation-report.json",
+        "revalidationReportHash": "f9e9501b14825b82b3c0b8a4e1c23c2f6bb491c4869d566dc2b3d959e81b1712",
+        "revalidationSuccess": true
+      }
+    ]
+  },
+  "pages": [
+    {
+      "nodeId": "page-index",
+      "htmlSrc": "pages/index.html",
+      "title": "首页 · Apple 风格重设计",
+      "pageType": "task-driven",
+      "writeMode": "SectionPlanThenWrite",
+      "viewportMode": "document-scroll",
+      "deviceType": "web",
+      "qualityRisks": [
+        "2×2 卡网格在 ≤740px 必须退化为单列，卡片视觉区高度用固定段高防止塌陷",
+        "黑卡上的灰字与亮蓝链接对比度必须达标",
+        "目录式页脚四列在移动端退化为两列，禁止挤压换行错乱"
+      ]
+    }
+  ]
+}

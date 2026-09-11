@@ -1,0 +1,143 @@
+{
+  "data": [
+    {
+      "id": "page-index",
+      "title": "首页 · Apple 风格重设计",
+      "type": "page",
+      "version": 1,
+      "createdAt": 1788783060000,
+      "canvasData": {
+        "x": 0,
+        "y": 0,
+        "group": 0,
+        "layoutSnapshot": {
+          "version": 1,
+          "contentHeight": 3126,
+          "viewportWidth": 1440,
+          "sourceHash": "fnv1a-cb5b508a",
+          "measuredAt": 1788852186930
+        },
+        "deviceType": "desktop"
+      },
+      "devMetadata": {
+        "htmlSrc": "pages/index.html",
+        "interactions": []
+      }
+    },
+    {
+      "id": "image-001",
+      "title": "人像原图",
+      "type": "image",
+      "version": 1,
+      "createdAt": 1788783060000,
+      "canvasData": {
+        "x": 0,
+        "y": 1022,
+        "naturalSize": {
+          "width": 1200,
+          "height": 1800
+        }
+      },
+      "devMetadata": {
+        "imageSrc": "assets/sample-portrait.jpg"
+      }
+    },
+    {
+      "id": "image-002",
+      "title": "人像抠图效果",
+      "type": "image",
+      "version": 1,
+      "createdAt": 1788783060000,
+      "canvasData": {
+        "x": 480,
+        "y": 1022,
+        "naturalSize": {
+          "width": 1200,
+          "height": 1800
+        }
+      },
+      "devMetadata": {
+        "imageSrc": "assets/portrait-cutout.png"
+      }
+    },
+    {
+      "id": "image-003",
+      "title": "商品原图",
+      "type": "image",
+      "version": 1,
+      "createdAt": 1788783060000,
+      "canvasData": {
+        "x": 960,
+        "y": 1022,
+        "naturalSize": {
+          "width": 1200,
+          "height": 800
+        }
+      },
+      "devMetadata": {
+        "imageSrc": "assets/sample-product.jpg"
+      }
+    },
+    {
+      "id": "image-004",
+      "title": "商品抠图效果",
+      "type": "image",
+      "version": 1,
+      "createdAt": 1788783060000,
+      "canvasData": {
+        "x": 1440,
+        "y": 1022,
+        "naturalSize": {
+          "width": 1200,
+          "height": 800
+        }
+      },
+      "devMetadata": {
+        "imageSrc": "assets/product-cutout.png"
+      }
+    },
+    {
+      "id": "image-005",
+      "title": "宠物原图",
+      "type": "image",
+      "version": 1,
+      "createdAt": 1788783060000,
+      "canvasData": {
+        "x": 1920,
+        "y": 1022,
+        "naturalSize": {
+          "width": 1200,
+          "height": 826
+        }
+      },
+      "devMetadata": {
+        "imageSrc": "assets/sample-pet.jpg"
+      }
+    },
+    {
+      "id": "image-006",
+      "title": "宠物抠图效果",
+      "type": "image",
+      "version": 1,
+      "createdAt": 1788783060000,
+      "canvasData": {
+        "x": 2400,
+        "y": 1022,
+        "naturalSize": {
+          "width": 1200,
+          "height": 826
+        }
+      },
+      "devMetadata": {
+        "imageSrc": "assets/pet-cutout.png"
+      }
+    }
+  ],
+  "config": {
+    "autoLayout": true,
+    "deviceType": "desktop",
+    "projectName": "裁云 rmbg · 苹果风格重设计",
+    "showEdge": false,
+    "visualEditorEnabled": false
+  }
+}
