@@ -1,7 +1,7 @@
 "use client";
 
 import { Check, EyeOff } from "lucide-react";
-import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   CATEGORY_LABELS,
   CATEGORY_ORDER,
@@ -86,12 +86,13 @@ export function Gallery({ selected, onSelect }: Props) {
           ))}
         </TabsList>
         {CATEGORY_ORDER.map((cat) => (
-          <BackgroundGrid
-            key={cat}
-            category={cat}
-            selected={selected}
-            onSelect={onSelect}
-          />
+          <TabsContent key={cat} value={cat}>
+            <BackgroundGrid
+              category={cat}
+              selected={selected}
+              onSelect={onSelect}
+            />
+          </TabsContent>
         ))}
       </Tabs>
     </div>
