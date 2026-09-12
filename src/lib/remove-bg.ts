@@ -13,9 +13,6 @@ import type { ErrorCode, ProgressInfo, StageTimings } from "@/types";
  *   device: 'gpu' 时库内部检测 WebGPU,不支持则自动回退 wasm。
  */
 
-/** 每个资源 key 的字节进度,跨 key 聚合出总百分比 */
-const fetchProgress = new Map<string, { cur: number; total: number }>();
-
 const STEP_INDEX: Record<string, number> = {
   decode: 0,
   inference: 1,
@@ -72,6 +69,7 @@ async function withOrtNoiseSilenced<T>(fn: () => Promise<T>): Promise<T> {
 export async function removeBg(
   source: Blob,
   onProgress: (p: ProgressInfo) => void,
+  signal?: AbortSignal,
 ): Promise<{ blob: Blob; timings: StageTimings }> {
   // 只在用户事件触发的调用栈里动态导入,永不进 SSR / 首屏 chunk
   const { removeBackground } = await import("@imgly/background-removal");
@@ -86,6 +84,9 @@ export async function removeBg(
   };
   const stageStart = performance.now();
   const marks = new Map<number, number>(); // stepIndex → 首次进入时间戳
+  const fetchProgress = new Map<string, { cur: number; total: number }>();
+
+  if (signal?.aborted) throw new DOMException("Cancelled", "AbortError");
 
   const blob = await withOrtNoiseSilenced(() =>
     removeBackground(source, {
@@ -94,6 +95,7 @@ export async function removeBg(
       // 自托管模型与 ORT 运行时(见 scripts/prepare-models.mjs)。
       // 库内部用 new URL(name, publicPath) 拼地址,必须是绝对 URL
       publicPath: `${window.location.origin}/models/`,
+      fetchArgs: signal ? { signal } : undefined,
       output: { format: "image/png", quality: 1 },
       progress: (key: string, current: number, total: number) => {
         if (key.startsWith("fetch:")) {
@@ -139,6 +141,10 @@ export async function removeBg(
 export function classifyError(err: unknown): ErrorCode {
   const msg =
     err instanceof Error ? `${err.name}: ${err.message}` : String(err ?? "");
+  if (/aborterror|cancelled|canceled/i.test(msg)) return "CANCELLED";
+  if (/indexeddb|cache storage|quota|storage.*denied|incognito/i.test(msg)) {
+    return "MODEL_CACHE";
+  }
   if (
     /failed to fetch|networkerror|resource metadata|download|enotfound|timeout/i.test(
       msg,
@@ -146,6 +152,9 @@ export function classifyError(err: unknown): ErrorCode {
   ) {
     return "MODEL_DOWNLOAD";
   }
-  if (/memory|allocat|abort|out of bounds/i.test(msg)) return "MEMORY";
+  if (/webassembly|wasm.*(?:disabled|unsupported)|canvas 2d unavailable/i.test(msg)) {
+    return "BROWSER_UNSUPPORTED";
+  }
+  if (/memory|allocat|out of bounds/i.test(msg)) return "MEMORY";
   return "INFERENCE";
 }

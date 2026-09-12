@@ -128,13 +128,13 @@ export default function Home() {
         <section className="py-16 sm:py-20">
           <div className="mx-auto max-w-3xl px-4 sm:px-6">
             <h2 className="text-2xl font-bold tracking-tight sm:text-3xl">
-              A free photo background replacer for every use case
+              A free photo background replacer for everyday edits
             </h2>
             <p className="mt-4 leading-relaxed text-muted-foreground">
-              Whether you&apos;re preparing product photos for Amazon, Shopify
-              or Etsy, swapping a portrait for social media, or just cleaning
-              up a picture for a presentation — SwitchBG handles it in one
-              step.
+              Whether you&apos;re updating a profile photo, making a family
+              collage, or cleaning up a picture for a school project —
+              SwitchBG handles it in one step. The current service is intended
+              for personal, non-commercial use.
             </p>
           </div>
         </section>
@@ -145,8 +145,8 @@ export default function Home() {
               Pick a background, or keep it transparent
             </h2>
             <p className="mt-4 leading-relaxed text-muted-foreground">
-              Choose from hundreds of backgrounds sorted by person, product and
-              car — or export a transparent PNG if you want to add your own.
+              Choose from backgrounds for people, objects and vehicles — or
+              export a transparent PNG if you want to add your own.
             </p>
           </div>
         </section>

@@ -1,6 +1,6 @@
 # SwitchBG
 
-Photo Background Changer — 上传照片,AI 本地抠图并替换背景,免费输出全分辨率图片。照片全程不离开浏览器。
+Photo Background Changer — 上传照片，AI 在浏览器内抠图并替换背景，免费输出全分辨率图片。SwitchBG 不会上传用户选择的图片文件；网页和首次模型资源加载仍需联网。
 
 ## 架构
 
@@ -14,12 +14,18 @@ Photo Background Changer — 上传照片,AI 本地抠图并替换背景,免费�
 ## 开发
 
 ```bash
-npm install        # postinstall 自动下载模型资源(约 76MB)
+npm install        # postinstall 自动下载模型与运行时资源(约 76MB)
 npm run dev        # http://localhost:3000
 npm run build && npm run start
 ```
 
 模型升级或缺失时:`npm run prepare:models`。背景图源更新:`node scripts/prepare-backgrounds.mjs`。
+
+## 许可与使用范围
+
+- 当前实现使用 `@imgly/background-removal@1.7.0`（AGPL-3.0）及其 `isnet_quint8` 模型；不是 BRIA RMBG-1.4。
+- 依赖附带的第三方声明将 ISNET 模型标注为 MIT License，来源为 `https://github.com/xuebinqin/DIS`。
+- 在项目运营方确认全部分发和合规义务前，SwitchBG 仅供个人、非商业用途。生产公开部署前应公开对应源代码以履行 AGPL，或向 IMG.LY 获取适用的商业许可。
 
 ## 验证脚本
 

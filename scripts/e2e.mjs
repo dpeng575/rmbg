@@ -1,6 +1,7 @@
 // 端到端验证:上传 → 抠图 → 选背景合成 → 下载 HD / 透明 PNG → 重置
 import { chromium } from "playwright";
 
+const baseUrl = process.env.BASE_URL ?? "http://localhost:3000";
 const browser = await chromium.launch({ channel: "chrome" });
 const page = await browser.newPage({ viewport: { width: 1440, height: 900 } });
 
@@ -14,7 +15,7 @@ page.on("request", (r) => {
   if (u.includes("/models/") || u.includes("staticimgly")) modelReqs.push(u);
 });
 
-await page.goto("http://localhost:3000", { waitUntil: "domcontentloaded" });
+await page.goto(baseUrl, { waitUntil: "domcontentloaded" });
 await page.waitForSelector("h1:has-text('Photo Background Changer')");
 
 // 跨域隔离 + 自托管断言
@@ -65,8 +66,9 @@ const d2 = await png;
 console.log("PNG download:", d2.suggestedFilename());
 
 // 重置回状态①
+page.once("dialog", (dialog) => dialog.accept());
 await page.click('button:has-text("Start over")');
-await page.waitForSelector('button:has-text("Upload a photo")');
+await page.waitForSelector('button:has-text("Upload photos")');
 console.log("reset to idle OK");
 
 const selfHosted = modelReqs.filter((u) => u.includes("/models/")).length;

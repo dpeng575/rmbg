@@ -13,8 +13,8 @@ export const FAQS: { q: string; a: string }[] = [
     a: "Upload your photo, wait a few seconds while the AI cuts out the subject, pick a new background from the library, and download the result. Everything runs in your browser — nothing to install.",
   },
   {
-    q: "Can I use SwitchBG as a photo background replacer for product photos?",
-    a: "Yes. SwitchBG works well for product photos destined for Amazon, Shopify or Etsy, and exports at your image's original resolution.",
+    q: "Does SwitchBG upload my photo?",
+    a: "No. SwitchBG processes the image in your browser and does not upload the image file to our servers. The app and its AI model still need an internet connection to load, especially on first use.",
   },
   {
     q: "Is there a change bg photo tool that works on mobile?",
@@ -26,11 +26,11 @@ export const FAQS: { q: string; a: string }[] = [
   },
   {
     q: "Do I need an app to change background photo?",
-    a: "No. SwitchBG is a web-based tool that runs entirely in your browser — on desktop and mobile alike.",
+    a: "No. SwitchBG is a web-based tool that processes images in your browser on desktop and mobile. An internet connection is still required to load the app and any model files that are not already cached.",
   },
   {
     q: "What should I use if I need a remove.bg replacement?",
-    a: "SwitchBG is a free alternative for changing or removing photo backgrounds: unlimited use, no signup, and no watermark, with everything processed privately in your own browser.",
+    a: "SwitchBG is a free alternative for personal, non-commercial background edits: no signup and no watermark. Image files are processed in your browser and are not uploaded by SwitchBG.",
   },
 ];
 
@@ -39,5 +39,5 @@ export const WHY_BULLETS: string[] = [
   "Free and unlimited — no credits, no daily cap",
   "No signup, no email — just upload and go",
   "No watermark, HD output — your image keeps its original resolution",
-  "Your images stay yours — we don't use them for anything else",
+  "Your image file is processed in your browser — SwitchBG does not upload it",
 ];

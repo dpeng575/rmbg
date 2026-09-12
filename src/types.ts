@@ -4,8 +4,13 @@
 export type ErrorCode =
   | "FORMAT"
   | "SIZE"
+  | "DECODE"
+  | "DIMENSIONS"
   | "FETCH_URL"
   | "MODEL_DOWNLOAD"
+  | "MODEL_CACHE"
+  | "BROWSER_UNSUPPORTED"
+  | "CANCELLED"
   | "INFERENCE"
   | "MEMORY";
 

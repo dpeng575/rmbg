@@ -6,8 +6,8 @@ import {
   useReducer,
   useRef,
   useState,
-  type DragEvent,
   type ChangeEvent,
+  type DragEvent,
 } from "react";
 import {
   AlertCircle,
@@ -17,36 +17,39 @@ import {
   ImageDown,
   Layers,
   Loader2,
+  Plus,
   RotateCcw,
+  Trash2,
   Upload,
+  X,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Gallery } from "./Gallery";
-import {
-  previewSize,
-  renderComposite,
-} from "@/lib/composite";
+import { previewSize, renderComposite } from "@/lib/composite";
 import { downloadBlob, formatElapsed, resultFilename } from "@/lib/download";
 import { COMPUTE_STEPS, classifyError, removeBg } from "@/lib/remove-bg";
-import { ERROR_COPY, validateImage } from "@/lib/validate";
+import {
+  ERROR_COPY,
+  ImageValidationError,
+  prepareImage,
+} from "@/lib/validate";
 import type { BackgroundOption } from "@/lib/backgrounds";
 import type { ErrorCode, ProgressInfo } from "@/types";
 
-/* ============================================================
-   状态机:① idle(上传 + 图库) → processing → ready
-   ready 又分:② 未选背景(棋盘格抠图 + 提示) ③ 已选背景(合成预览 + 下载 HD)
-   ============================================================ */
-
 type Phase = "idle" | "validating" | "processing" | "ready" | "error";
+type Mode = "single" | "batch";
 
 type Cutout = {
   bitmap: ImageBitmap;
-  url: string; // objectURL,透明展示与下载用
+  url: string;
   blob: Blob;
   width: number;
   height: number;
+  originalWidth: number;
+  originalHeight: number;
+  downsampled: boolean;
   fileName: string;
   elapsedMs: number;
 };
@@ -57,8 +60,8 @@ type State = {
   error: ErrorCode | null;
   cutout: Cutout | null;
   originalUrl: string | null;
-  originalName: string; // 重试用
-  retryBlob: Blob | null; // 重试用
+  originalName: string;
+  retryBlob: Blob | null;
   selected: BackgroundOption | null;
   previewUrl: string | null;
   compositing: boolean;
@@ -84,7 +87,7 @@ const INITIAL: State = {
 };
 
 type Action =
-  | { type: "validating" }
+  | { type: "validating"; name: string; blob: Blob }
   | { type: "processing"; originalUrl: string; name: string; blob: Blob }
   | { type: "progress"; progress: ProgressInfo }
   | { type: "done"; cutout: Cutout }
@@ -101,7 +104,13 @@ type Action =
 function reducer(state: State, action: Action): State {
   switch (action.type) {
     case "validating":
-      return { ...INITIAL, phase: "validating", selected: state.selected };
+      return {
+        ...INITIAL,
+        phase: "validating",
+        selected: state.selected,
+        originalName: action.name,
+        retryBlob: action.blob,
+      };
     case "processing":
       return {
         ...state,
@@ -139,136 +148,485 @@ function reducer(state: State, action: Action): State {
   }
 }
 
+type BatchStatus = "queued" | "validating" | "processing" | "done" | "error";
+type BatchItem = {
+  id: number;
+  source: Blob | null;
+  name: string;
+  sourceUrl: string;
+  status: BatchStatus;
+  progress: ProgressInfo | null;
+  error: ErrorCode | null;
+  outputBlob: Blob | null;
+  outputUrl: string | null;
+  width: number;
+  height: number;
+  originalWidth: number;
+  originalHeight: number;
+  downsampled: boolean;
+  elapsedMs: number;
+};
+
+type InputSource = { blob: Blob; name: string };
+
 const SAMPLES = [
   { src: "/samples/portrait.jpg", label: "Portrait" },
   { src: "/samples/product.jpg", label: "Product" },
   { src: "/samples/pet.jpg", label: "Pet" },
 ] as const;
 
+function errorCode(error: unknown): ErrorCode {
+  return error instanceof ImageValidationError ? error.code : classifyError(error);
+}
+
 export function BackgroundStudio() {
   const [state, dispatch] = useReducer(reducer, INITIAL);
+  const [mode, setMode] = useState<Mode>("single");
+  const modeRef = useRef<Mode>("single");
   const [dragging, setDragging] = useState(false);
+  const [batchItems, setBatchItems] = useState<BatchItem[]>([]);
+  const [batchBusy, setBatchBusy] = useState(false);
+  const [batchPaused, setBatchPaused] = useState(false);
+  const [batchExporting, setBatchExporting] = useState<number | null>(null);
+  const batchItemsRef = useRef<BatchItem[]>([]);
+  const batchRunningRef = useRef(false);
+  const batchStopRef = useRef(false);
+  const nextBatchIdRef = useRef(1);
   const dragDepth = useRef(0);
   const inputRef = useRef<HTMLInputElement>(null);
-
-  /** objectURL 与位图生命周期统一管理 */
-  const urlsRef = useRef(new Set<string>());
-  const track = useCallback((url: string) => {
-    urlsRef.current.add(url);
-    return url;
-  }, []);
-  const revokeAll = useCallback(() => {
-    for (const url of urlsRef.current) URL.revokeObjectURL(url);
-    urlsRef.current.clear();
-  }, []);
-  useEffect(() => revokeAll, [revokeAll]);
-
-  /** 回调里需要的最新引用 */
+  const toolRef = useRef<HTMLDivElement>(null);
+  const taskIdRef = useRef(0);
+  const compositeIdRef = useRef(0);
+  const controllerRef = useRef<AbortController | null>(null);
+  const singleUrlsRef = useRef(new Set<string>());
+  const batchUrlsRef = useRef(new Set<string>());
   const selectedRef = useRef(state.selected);
   const cutoutRef = useRef(state.cutout);
+  const previewUrlRef = useRef<string | null>(null);
+
+  const updateBatch = useCallback(
+    (updater: (current: BatchItem[]) => BatchItem[]) => {
+      const next = updater(batchItemsRef.current);
+      batchItemsRef.current = next;
+      setBatchItems(next);
+    },
+    [],
+  );
+
+  const trackSingle = useCallback((url: string) => {
+    singleUrlsRef.current.add(url);
+    return url;
+  }, []);
+  const trackBatch = useCallback((url: string) => {
+    batchUrlsRef.current.add(url);
+    return url;
+  }, []);
+  const revokeUrl = useCallback((set: Set<string>, url: string | null) => {
+    if (!url || !set.delete(url)) return;
+    URL.revokeObjectURL(url);
+  }, []);
+
+  const releaseSingle = useCallback(() => {
+    cutoutRef.current?.bitmap.close();
+    cutoutRef.current = null;
+    for (const url of singleUrlsRef.current) URL.revokeObjectURL(url);
+    singleUrlsRef.current.clear();
+    previewUrlRef.current = null;
+  }, []);
+  const releaseBatch = useCallback(() => {
+    for (const url of batchUrlsRef.current) URL.revokeObjectURL(url);
+    batchUrlsRef.current.clear();
+    batchItemsRef.current = [];
+    setBatchItems([]);
+  }, []);
+
+  useEffect(() => {
+    modeRef.current = mode;
+  }, [mode]);
   useEffect(() => {
     selectedRef.current = state.selected;
     cutoutRef.current = state.cutout;
   });
+  useEffect(() => {
+    if (mode === "single" && state.phase === "idle") return;
+    requestAnimationFrame(() => {
+      toolRef.current
+        ?.querySelector<HTMLElement>("[data-status-focus]")
+        ?.focus({ preventScroll: true });
+    });
+  }, [mode, state.phase]);
+  useEffect(
+    () => () => {
+      controllerRef.current?.abort();
+      taskIdRef.current += 1;
+      releaseSingle();
+      releaseBatch();
+    },
+    [releaseBatch, releaseSingle],
+  );
 
-  /** 合成预览(降采样,切背景即时出图) */
+  const setPreview = useCallback(
+    (url: string | null) => {
+      revokeUrl(singleUrlsRef.current, previewUrlRef.current);
+      previewUrlRef.current = url;
+      if (url) trackSingle(url);
+      dispatch({ type: "preview", url });
+    },
+    [revokeUrl, trackSingle],
+  );
+
   const applyComposite = useCallback(
-    async (cutout: Cutout, bg: BackgroundOption | null) => {
-      if (!bg || bg.kind === "transparent") {
-        dispatch({ type: "preview", url: null });
+    async (cutout: Cutout, background: BackgroundOption | null) => {
+      const compositeId = ++compositeIdRef.current;
+      if (!background || background.kind === "transparent") {
+        setPreview(null);
+        dispatch({ type: "compositing", on: false });
         return;
       }
       dispatch({ type: "compositing", on: true });
       try {
         const blob = await renderComposite(
           cutout.bitmap,
-          bg,
+          background,
           previewSize(cutout.width, cutout.height),
           0.9,
         );
-        dispatch({ type: "preview", url: track(URL.createObjectURL(blob)) });
+        if (compositeId !== compositeIdRef.current || cutoutRef.current !== cutout) return;
+        setPreview(URL.createObjectURL(blob));
       } catch {
-        dispatch({ type: "preview", url: null });
+        if (compositeId === compositeIdRef.current) setPreview(null);
       } finally {
-        dispatch({ type: "compositing", on: false });
+        if (compositeId === compositeIdRef.current) {
+          dispatch({ type: "compositing", on: false });
+        }
       }
     },
-    [track],
+    [setPreview],
   );
 
-  /** 上传 → 校验 → 抠图完整管线 */
-  const run = useCallback(
-    async (blob: Blob, name: string) => {
-      const verdict = validateImage(blob);
-      if (!verdict.ok) {
-        dispatch({ type: "invalid", code: verdict.code });
-        return;
-      }
-      revokeAll();
-      dispatch({ type: "validating" });
-
-      let width = 0;
-      let height = 0;
+  const runSingle = useCallback(
+    async (source: Blob, name: string) => {
+      controllerRef.current?.abort();
+      const controller = new AbortController();
+      controllerRef.current = controller;
+      const taskId = ++taskIdRef.current;
+      compositeIdRef.current += 1;
+      releaseSingle();
+      dispatch({ type: "validating", name, blob: source });
       try {
-        const bmp = await createImageBitmap(blob);
-        width = bmp.width;
-        height = bmp.height;
-        bmp.close();
-      } catch {
-        /* 读不出尺寸不阻塞,合成时兜底 */
-      }
-
-      dispatch({
-        type: "processing",
-        originalUrl: track(URL.createObjectURL(blob)),
-        name,
-        blob,
-      });
-
-      const startedAt = performance.now();
-      try {
-        const { blob: cutoutBlob } = await removeBg(blob, (progress) =>
-          dispatch({ type: "progress", progress }),
+        const prepared = await prepareImage(source);
+        if (taskId !== taskIdRef.current) return;
+        dispatch({
+          type: "processing",
+          originalUrl: trackSingle(URL.createObjectURL(source)),
+          name,
+          blob: source,
+        });
+        const startedAt = performance.now();
+        const { blob: cutoutBlob } = await removeBg(
+          prepared.blob,
+          (progress) => {
+            if (taskId === taskIdRef.current) dispatch({ type: "progress", progress });
+          },
+          controller.signal,
         );
         const bitmap = await createImageBitmap(cutoutBlob);
+        if (taskId !== taskIdRef.current) {
+          bitmap.close();
+          return;
+        }
         const cutout: Cutout = {
           bitmap,
-          url: track(URL.createObjectURL(cutoutBlob)),
+          url: trackSingle(URL.createObjectURL(cutoutBlob)),
           blob: cutoutBlob,
-          width: width || bitmap.width,
-          height: height || bitmap.height,
+          width: prepared.width,
+          height: prepared.height,
+          originalWidth: prepared.originalWidth,
+          originalHeight: prepared.originalHeight,
+          downsampled: prepared.downsampled,
           fileName: name,
           elapsedMs: performance.now() - startedAt,
         };
+        cutoutRef.current = cutout;
         dispatch({ type: "done", cutout });
-
-        // 状态①预选过背景 → 直接进入合成(跳过②)
         const preselected = selectedRef.current;
         if (preselected && preselected.kind !== "transparent") {
           void applyComposite(cutout, preselected);
         }
-      } catch (err) {
-        console.error("[switchbg] raw error:", err);
-        dispatch({ type: "failed", code: classifyError(err) });
+      } catch (error) {
+        if (taskId !== taskIdRef.current) return;
+        console.error("[switchbg] processing failed:", error);
+        dispatch({ type: "failed", code: errorCode(error) });
       }
     },
-    [applyComposite, revokeAll, track],
+    [applyComposite, releaseSingle, trackSingle],
   );
 
+  const cancelSingle = useCallback(() => {
+    controllerRef.current?.abort();
+    taskIdRef.current += 1;
+    compositeIdRef.current += 1;
+    dispatch({ type: "failed", code: "CANCELLED" });
+  }, []);
+
+  const drainBatch = useCallback(async () => {
+    if (batchRunningRef.current) return;
+    batchRunningRef.current = true;
+    batchStopRef.current = false;
+    setBatchBusy(true);
+    setBatchPaused(false);
+    try {
+      while (!batchStopRef.current) {
+        const item = batchItemsRef.current.find((candidate) => candidate.status === "queued");
+        if (!item) break;
+        if (!item.source) {
+          updateBatch((items) => items.filter((candidate) => candidate.id !== item.id));
+          continue;
+        }
+        const source = item.source;
+        updateBatch((items) =>
+          items.map((candidate) =>
+            candidate.id === item.id
+              ? { ...candidate, status: "validating", error: null, progress: null }
+              : candidate,
+          ),
+        );
+        const controller = new AbortController();
+        controllerRef.current = controller;
+        const startedAt = performance.now();
+        try {
+          const prepared = await prepareImage(source);
+          if (batchStopRef.current) {
+            updateBatch((items) =>
+              items.map((candidate) =>
+                candidate.id === item.id
+                  ? { ...candidate, status: "queued", progress: null }
+                  : candidate,
+              ),
+            );
+            break;
+          }
+          updateBatch((items) =>
+            items.map((candidate) =>
+              candidate.id === item.id
+                ? {
+                    ...candidate,
+                    status: "processing",
+                    width: prepared.width,
+                    height: prepared.height,
+                    originalWidth: prepared.originalWidth,
+                    originalHeight: prepared.originalHeight,
+                    downsampled: prepared.downsampled,
+                  }
+                : candidate,
+            ),
+          );
+          const { blob } = await removeBg(
+            prepared.blob,
+            (progress) =>
+              updateBatch((items) =>
+                items.map((candidate) =>
+                  candidate.id === item.id ? { ...candidate, progress } : candidate,
+                ),
+              ),
+            controller.signal,
+          );
+          if (batchStopRef.current) {
+            updateBatch((items) =>
+              items.map((candidate) =>
+                candidate.id === item.id
+                  ? { ...candidate, status: "queued", progress: null }
+                  : candidate,
+              ),
+            );
+            break;
+          }
+          const outputUrl = trackBatch(URL.createObjectURL(blob));
+          revokeUrl(batchUrlsRef.current, item.sourceUrl);
+          updateBatch((items) =>
+            items.map((candidate) =>
+              candidate.id === item.id
+                ? {
+                    ...candidate,
+                    status: "done",
+                    source: null,
+                    sourceUrl: "",
+                    progress: null,
+                    outputBlob: blob,
+                    outputUrl,
+                    elapsedMs: performance.now() - startedAt,
+                  }
+                : candidate,
+            ),
+          );
+        } catch (error) {
+          if (batchStopRef.current) {
+            updateBatch((items) =>
+              items.map((candidate) =>
+                candidate.id === item.id
+                  ? { ...candidate, status: "queued", progress: null }
+                  : candidate,
+              ),
+            );
+            break;
+          }
+          console.error("[switchbg] batch item failed:", error);
+          updateBatch((items) =>
+            items.map((candidate) =>
+              candidate.id === item.id
+                ? { ...candidate, status: "error", progress: null, error: errorCode(error) }
+                : candidate,
+            ),
+          );
+        }
+      }
+    } finally {
+      controllerRef.current = null;
+      batchRunningRef.current = false;
+      setBatchBusy(false);
+      setBatchPaused(
+        batchStopRef.current && batchItemsRef.current.some((item) => item.status === "queued"),
+      );
+    }
+  }, [revokeUrl, trackBatch, updateBatch]);
+
+  const addToBatch = useCallback(
+    (sources: InputSource[]) => {
+      controllerRef.current?.abort();
+      taskIdRef.current += 1;
+      compositeIdRef.current += 1;
+      releaseSingle();
+      const additions = sources.map(({ blob, name }) => ({
+        id: nextBatchIdRef.current++,
+        source: blob,
+        name,
+        sourceUrl: trackBatch(URL.createObjectURL(blob)),
+        status: "queued" as const,
+        progress: null,
+        error: null,
+        outputBlob: null,
+        outputUrl: null,
+        width: 0,
+        height: 0,
+        originalWidth: 0,
+        originalHeight: 0,
+        downsampled: false,
+        elapsedMs: 0,
+      }));
+      modeRef.current = "batch";
+      setMode("batch");
+      updateBatch((items) => [...items, ...additions]);
+      queueMicrotask(() => void drainBatch());
+    },
+    [drainBatch, releaseSingle, trackBatch, updateBatch],
+  );
+
+  const acceptSources = useCallback(
+    (sources: InputSource[]) => {
+      if (!sources.length) return;
+      if (modeRef.current === "batch" || sources.length > 1) {
+        addToBatch(sources);
+      } else {
+        void runSingle(sources[0].blob, sources[0].name);
+      }
+    },
+    [addToBatch, runSingle],
+  );
+
+  const resetSingle = useCallback(
+    (ask = true) => {
+      if (ask && state.phase !== "idle" && !window.confirm("Clear this photo and its result?")) return;
+      controllerRef.current?.abort();
+      taskIdRef.current += 1;
+      compositeIdRef.current += 1;
+      releaseSingle();
+      dispatch({ type: "reset" });
+    },
+    [releaseSingle, state.phase],
+  );
+  const cancelBatch = useCallback(() => {
+    batchStopRef.current = true;
+    controllerRef.current?.abort();
+  }, []);
+  const clearBatch = useCallback(
+    (exit: boolean) => {
+      if (
+        batchItemsRef.current.length > 0 &&
+        !window.confirm(exit ? "Exit batch mode and clear the queue?" : "Clear the entire batch queue?")
+      ) return;
+      cancelBatch();
+      releaseBatch();
+      setBatchPaused(false);
+      if (exit) {
+        modeRef.current = "single";
+        setMode("single");
+        dispatch({ type: "reset" });
+      }
+    },
+    [cancelBatch, releaseBatch],
+  );
+  const removeBatchItem = useCallback(
+    (id: number) => {
+      const item = batchItemsRef.current.find((candidate) => candidate.id === id);
+      if (!item || item.status === "processing" || item.status === "validating") return;
+      revokeUrl(batchUrlsRef.current, item.sourceUrl);
+      revokeUrl(batchUrlsRef.current, item.outputUrl);
+      updateBatch((items) => items.filter((candidate) => candidate.id !== id));
+    },
+    [revokeUrl, updateBatch],
+  );
+  const retryBatchItem = useCallback(
+    (id: number) => {
+      updateBatch((items) =>
+        items.map((item) => (item.id === id ? { ...item, status: "queued", error: null } : item)),
+      );
+      queueMicrotask(() => void drainBatch());
+    },
+    [drainBatch, updateBatch],
+  );
+
+  const downloadBatchItem = useCallback(async (item: BatchItem) => {
+    if (!item.outputBlob) return;
+    const background = selectedRef.current;
+    setBatchExporting(item.id);
+    try {
+      if (!background || background.kind === "transparent") {
+        downloadBlob(item.outputBlob, resultFilename(item.name, "png"));
+        return;
+      }
+      const bitmap = await createImageBitmap(item.outputBlob);
+      try {
+        const blob = await renderComposite(
+          bitmap,
+          background,
+          { width: item.width, height: item.height },
+          0.95,
+        );
+        downloadBlob(blob, resultFilename(item.name, "jpg"));
+      } finally {
+        bitmap.close();
+      }
+    } catch (error) {
+      console.error("[switchbg] batch export failed:", error);
+    } finally {
+      setBatchExporting(null);
+    }
+  }, []);
+
   const onSelect = useCallback(
-    (bg: BackgroundOption) => {
-      dispatch({ type: "select", bg });
-      const cutout = cutoutRef.current;
-      if (cutout) void applyComposite(cutout, bg);
+    (background: BackgroundOption) => {
+      selectedRef.current = background;
+      dispatch({ type: "select", bg: background });
+      if (modeRef.current === "single" && cutoutRef.current) {
+        void applyComposite(cutoutRef.current, background);
+      }
     },
     [applyComposite],
   );
-
   const onDownload = useCallback(async () => {
     const cutout = cutoutRef.current;
     if (!cutout) return;
     const selected = selectedRef.current;
-    // 未选背景 / 透明:下载抠图 PNG
     if (!selected || selected.kind === "transparent") {
       downloadBlob(cutout.blob, resultFilename(cutout.fileName, "png"));
       dispatch({ type: "downloaded" });
@@ -284,350 +642,149 @@ export function BackgroundStudio() {
       );
       downloadBlob(blob, resultFilename(cutout.fileName, "jpg"));
       dispatch({ type: "downloaded" });
-    } catch (err) {
-      console.error("[switchbg] export failed:", err);
+    } catch (error) {
+      console.error("[switchbg] export failed:", error);
     } finally {
       dispatch({ type: "exporting", on: false });
     }
   }, []);
 
-  const reset = useCallback(() => {
-    cutoutRef.current?.bitmap.close();
-    revokeAll();
-    dispatch({ type: "reset" });
-  }, [revokeAll]);
-
-  const pickFile = useCallback(
-    (file: Blob | null | undefined, fallbackName = "pasted-image") => {
-      if (!file) return;
-      const name =
-        file instanceof File && file.name ? file.name : fallbackName;
-      void run(file, name);
-    },
-    [run],
-  );
-
   const loadSample = useCallback(
     async (src: string, label: string) => {
       try {
-        const res = await fetch(src);
-        const blob = await res.blob();
-        void run(blob, `sample-${label.toLowerCase()}.jpg`);
+        const response = await fetch(src);
+        if (!response.ok) throw new Error(`HTTP ${response.status}`);
+        const blob = await response.blob();
+        acceptSources([{ blob, name: `sample-${label.toLowerCase()}.jpg` }]);
       } catch {
         dispatch({ type: "invalid", code: "FETCH_URL" });
       }
     },
-    [run],
+    [acceptSources],
   );
 
-  /** 粘贴通道(仅 idle) */
   useEffect(() => {
-    if (state.phase !== "idle") return;
-    const onPaste = (e: ClipboardEvent) => {
-      for (const item of e.clipboardData?.items ?? []) {
-        if (item.type.startsWith("image/")) {
-          e.preventDefault();
-          pickFile(item.getAsFile());
-          return;
-        }
+    const onPaste = (event: ClipboardEvent) => {
+      for (const item of event.clipboardData?.items ?? []) {
+        if (!item.type.startsWith("image/")) continue;
+        const file = item.getAsFile();
+        if (!file) return;
+        event.preventDefault();
+        acceptSources([{ blob: file, name: file.name || "pasted-image.png" }]);
+        return;
       }
     };
     window.addEventListener("paste", onPaste);
     return () => window.removeEventListener("paste", onPaste);
-  }, [state.phase, pickFile]);
+  }, [acceptSources]);
 
-  const onInputChange = (e: ChangeEvent<HTMLInputElement>) => {
-    pickFile(e.target.files?.[0]);
-    e.target.value = "";
+  const onInputChange = (event: ChangeEvent<HTMLInputElement>) => {
+    const files = Array.from(event.target.files ?? []);
+    acceptSources(files.map((file) => ({ blob: file, name: file.name })));
+    event.target.value = "";
   };
-
-  const onDragEnter = (e: DragEvent) => {
-    e.preventDefault();
+  const onDragEnter = (event: DragEvent) => {
+    event.preventDefault();
     dragDepth.current += 1;
     setDragging(true);
   };
-  const onDragLeave = (e: DragEvent) => {
-    e.preventDefault();
+  const onDragLeave = (event: DragEvent) => {
+    event.preventDefault();
     dragDepth.current -= 1;
     if (dragDepth.current <= 0) {
       dragDepth.current = 0;
       setDragging(false);
     }
   };
-  const onDrop = (e: DragEvent) => {
-    e.preventDefault();
+  const onDrop = (event: DragEvent) => {
+    event.preventDefault();
     dragDepth.current = 0;
     setDragging(false);
-    pickFile(e.dataTransfer.files?.[0]);
+    const files = Array.from(event.dataTransfer.files ?? []);
+    acceptSources(files.map((file) => ({ blob: file, name: file.name })));
   };
 
   const ready = state.phase === "ready" && state.cutout;
-  const transparentView =
-    ready && (!state.selected || state.selected.kind === "transparent");
+  const transparentView = ready && (!state.selected || state.selected.kind === "transparent");
+  const doneCount = batchItems.filter((item) => item.status === "done").length;
 
   return (
     <section id="tool" className="scroll-mt-20 pt-10 pb-6">
       <div className="mx-auto max-w-4xl px-4 sm:px-6">
-        <div className="rounded-2xl border border-border bg-card p-5 shadow-sm sm:p-8">
-          {/* —— 状态① 上传 —— */}
-          {state.phase === "idle" && (
+        <div ref={toolRef} className="rounded-xl border border-border bg-card p-5 shadow-sm sm:p-8">
+          <input
+            ref={inputRef}
+            type="file"
+            multiple
+            accept="image/jpeg,image/png,image/webp"
+            className="sr-only"
+            onChange={onInputChange}
+          />
+          {mode === "batch" ? (
+            <BatchPanel
+              items={batchItems}
+              busy={batchBusy}
+              paused={batchPaused}
+              doneCount={doneCount}
+              exportingId={batchExporting}
+              onAdd={() => inputRef.current?.click()}
+              onCancel={cancelBatch}
+              onResume={() => void drainBatch()}
+              onClear={() => clearBatch(false)}
+              onExit={() => clearBatch(true)}
+              onRemove={removeBatchItem}
+              onRetry={retryBatchItem}
+              onDownload={(item) => void downloadBatchItem(item)}
+            />
+          ) : (
             <>
-              {state.error && (
-                <div
-                  role="alert"
-                  className="animate-pop mb-5 rounded-xl border border-destructive/30 bg-destructive/5 px-4 py-3"
-                >
-                  <p className="text-sm font-semibold text-destructive">
-                    {ERROR_COPY[state.error].title}
-                  </p>
-                  <p className="mt-0.5 text-sm text-muted-foreground">
-                    {ERROR_COPY[state.error].hint}
-                  </p>
-                </div>
-              )}
-              <div
-                onDragEnter={onDragEnter}
-                onDragLeave={onDragLeave}
-                onDragOver={(e) => e.preventDefault()}
-                onDrop={onDrop}
-                className={[
-                  "rounded-xl border-2 border-dashed px-6 py-12 text-center transition-all duration-200",
-                  dragging
-                    ? "scale-[1.005] border-primary bg-primary/5"
-                    : "border-input hover:border-primary/50",
-                ].join(" ")}
-              >
-                <span className="mx-auto flex size-13 items-center justify-center rounded-2xl bg-primary/10 text-primary">
-                  <Upload className="size-6" strokeWidth={1.75} />
-                </span>
-                <Button
-                  size="lg"
-                  className="mt-5 cursor-pointer px-8"
-                  onClick={() => inputRef.current?.click()}
-                >
-                  <Upload className="size-4.5" />
-                  Upload a photo
-                </Button>
-                <input
-                  ref={inputRef}
-                  type="file"
-                  accept="image/jpeg,image/png,image/webp"
-                  className="sr-only"
-                  onChange={onInputChange}
+              {state.phase === "idle" && (
+                <UploadPanel
+                  error={state.error}
+                  dragging={dragging}
+                  onChoose={() => inputRef.current?.click()}
+                  onDragEnter={onDragEnter}
+                  onDragLeave={onDragLeave}
+                  onDrop={onDrop}
+                  onSample={loadSample}
                 />
-                <p className="mt-4 text-sm text-muted-foreground">
-                  Drag & drop, or paste from clipboard (⌘/Ctrl + V)
-                </p>
-                <p className="mt-6 flex items-center justify-center gap-1.5 text-xs text-muted-foreground/80">
-                  <FileImage className="size-3.5" />
-                  JPG · PNG · WebP, up to 22 MB — processed locally, never uploaded
-                </p>
-                <div className="mt-6">
-                  <p className="text-xs text-muted-foreground/80">
-                    No image? Try one:
-                  </p>
-                  <div className="mt-2.5 flex items-center justify-center gap-2.5">
-                    {SAMPLES.map((s) => (
-                      <button
-                        key={s.src}
-                        type="button"
-                        onClick={() => void loadSample(s.src, s.label)}
-                        className="group relative size-14 cursor-pointer overflow-hidden rounded-lg border border-border transition-transform duration-150 hover:-translate-y-0.5"
-                      >
-                        {/* eslint-disable-next-line @next/next/no-img-element */}
-                        <img
-                          src={s.src}
-                          alt={`Sample: ${s.label}`}
-                          className="size-full object-cover"
-                          loading="lazy"
-                        />
-                        <span className="absolute inset-x-0 bottom-0 bg-foreground/55 py-px text-center text-[10px] font-medium text-white backdrop-blur-sm">
-                          {s.label}
-                        </span>
-                      </button>
-                    ))}
+              )}
+              {(state.phase === "validating" || state.phase === "processing") && (
+                <ProcessingPanel progress={state.progress} phase={state.phase} onCancel={cancelSingle} />
+              )}
+              {state.phase === "error" && state.error && (
+                <div data-status-focus className="flex flex-col items-center py-10 text-center" role="alert" tabIndex={-1}>
+                  <span className="animate-pop flex size-14 items-center justify-center rounded-xl bg-destructive/10 text-destructive">
+                    <AlertCircle className="size-7" strokeWidth={1.75} />
+                  </span>
+                  <h2 className="mt-5 text-xl font-bold">{ERROR_COPY[state.error].title}</h2>
+                  <p className="mt-2 max-w-sm text-sm text-muted-foreground">{ERROR_COPY[state.error].hint}</p>
+                  <div className="mt-7 flex flex-wrap justify-center gap-3">
+                    {state.retryBlob && (
+                      <Button onClick={() => void runSingle(state.retryBlob!, state.originalName)}>
+                        <RotateCcw className="size-4" /> Retry
+                      </Button>
+                    )}
+                    <Button variant="outline" onClick={() => resetSingle(false)}>
+                      <Upload className="size-4" /> Change photo
+                    </Button>
                   </div>
                 </div>
-              </div>
-            </>
-          )}
-
-          {/* —— 处理中(校验瞬态 + 模型下载 + 推理) —— */}
-          {(state.phase === "validating" || state.phase === "processing") && (
-            <ProcessingPanel progress={state.progress} phase={state.phase} />
-          )}
-
-          {/* —— 处理失败 —— */}
-          {state.phase === "error" && state.error && (
-            <div className="flex flex-col items-center py-10 text-center">
-              <span className="animate-pop flex size-14 items-center justify-center rounded-2xl bg-destructive/10 text-destructive">
-                <AlertCircle className="size-7" strokeWidth={1.75} />
-              </span>
-              <h2 className="mt-5 text-xl font-bold">
-                {ERROR_COPY[state.error].title}
-              </h2>
-              <p className="mt-2 max-w-sm text-sm text-muted-foreground">
-                {ERROR_COPY[state.error].hint}
-              </p>
-              <div className="mt-7 flex gap-3">
-                <Button
-                  onClick={() =>
-                    state.retryBlob &&
-                    void run(state.retryBlob, state.originalName)
+              )}
+              {ready && state.cutout && (
+                <ReadyPanel
+                  state={{ ...state, cutout: state.cutout }}
+                  transparentView={Boolean(transparentView)}
+                  onCompare={(view) => dispatch({ type: "compare", view })}
+                  onReset={() => resetSingle(true)}
+                  onDownload={() => void onDownload()}
+                  onTransparentDownload={() =>
+                    downloadBlob(state.cutout!.blob, resultFilename(state.cutout!.fileName, "png"))
                   }
-                >
-                  <RotateCcw className="size-4" />
-                  Retry
-                </Button>
-                <Button variant="outline" onClick={reset}>
-                  <Upload className="size-4" />
-                  Change photo
-                </Button>
-              </div>
-            </div>
-          )}
-
-          {/* —— 状态②③ 抠图完成 —— */}
-          {ready && state.cutout && (
-            <>
-              <div className="flex flex-wrap items-center justify-between gap-3">
-                <div className="flex min-w-0 items-center gap-2.5">
-                  <span className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-accent/15 text-accent">
-                    <Check className="size-4.5" strokeWidth={2.5} />
-                  </span>
-                  <p className="truncate font-mono text-xs text-muted-foreground">
-                    {state.cutout.fileName} · {state.cutout.width}×
-                    {state.cutout.height} ·{" "}
-                    {formatElapsed(state.cutout.elapsedMs)}
-                  </p>
-                </div>
-                <div className="flex items-center gap-2">
-                  <Tabs
-                    value={state.compare}
-                    onValueChange={(v) =>
-                      dispatch({
-                        type: "compare",
-                        view: v as "result" | "original",
-                      })
-                    }
-                  >
-                    <TabsList>
-                      <TabsTrigger value="result">Result</TabsTrigger>
-                      <TabsTrigger value="original">Original</TabsTrigger>
-                    </TabsList>
-                  </Tabs>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={reset}
-                    className="cursor-pointer text-muted-foreground"
-                  >
-                    <RotateCcw className="size-4" />
-                    Start over
-                  </Button>
-                </div>
-              </div>
-
-              {/* 预览区:原图 / 棋盘格抠图(②) / 合成结果(③) */}
-              <div className="relative mt-4 flex justify-center">
-                <div
-                  className={[
-                    "relative inline-block overflow-hidden rounded-xl border border-border",
-                    transparentView || state.compare === "original"
-                      ? ""
-                      : "",
-                    state.compare === "original" ? "" : transparentView ? "checkerboard" : "",
-                  ].join(" ")}
-                >
-                  {state.compare === "original" && state.originalUrl ? (
-                    /* eslint-disable-next-line @next/next/no-img-element */
-                    <img
-                      src={state.originalUrl}
-                      alt="Original photo"
-                      className="block max-h-[62vh] w-auto max-w-full"
-                    />
-                  ) : /* eslint-disable-next-line @next/next/no-img-element */
-                  transparentView ? (
-                    <img
-                      src={state.cutout.url}
-                      alt="Cutout with transparent background"
-                      className="block max-h-[62vh] w-auto max-w-full"
-                    />
-                  ) : state.previewUrl ? (
-                    <img
-                      src={state.previewUrl}
-                      alt="Photo with new background"
-                      className="block max-h-[62vh] w-auto max-w-full"
-                    />
-                  ) : (
-                    <div className="flex h-64 w-full items-center justify-center">
-                      <Loader2 className="size-6 animate-spin text-muted-foreground" />
-                    </div>
-                  )}
-
-                  {/* 合成中微遮罩 */}
-                  {state.compositing && state.previewUrl && (
-                    <div className="animate-pulse absolute inset-0 bg-background/30" />
-                  )}
-
-                  {/* 状态②:引导选背景 */}
-                  {transparentView && state.compare === "result" && (
-                    <div className="absolute inset-x-0 bottom-0 flex justify-center bg-gradient-to-t from-background/80 to-transparent px-4 pt-10 pb-3">
-                      <span className="rounded-full bg-foreground/80 px-4 py-1.5 text-xs font-medium text-background backdrop-blur-sm">
-                        Pick a background below ↓
-                      </span>
-                    </div>
-                  )}
-                </div>
-              </div>
-
-              {/* 操作条 */}
-              <div className="mt-5 flex flex-col items-center gap-3">
-                <div className="flex flex-wrap items-center justify-center gap-3">
-                  <Button
-                    size="lg"
-                    disabled={state.exporting}
-                    onClick={() => void onDownload()}
-                    className="cursor-pointer bg-accent px-8 text-accent-foreground hover:bg-accent/90"
-                  >
-                    {state.exporting ? (
-                      <Loader2 className="size-4.5 animate-spin" />
-                    ) : state.downloaded ? (
-                      <Check className="size-4.5" />
-                    ) : (
-                      <Download className="size-4.5" />
-                    )}
-                    {state.exporting
-                      ? "Exporting…"
-                      : state.downloaded
-                        ? "Downloaded"
-                        : transparentView
-                          ? "Download HD"
-                          : "Download HD"}
-                  </Button>
-                  <Button
-                    variant="outline"
-                    onClick={() => {
-                      downloadBlob(
-                        state.cutout!.blob,
-                        resultFilename(state.cutout!.fileName, "png"),
-                      );
-                    }}
-                    className="cursor-pointer"
-                  >
-                    <ImageDown className="size-4" />
-                    Transparent PNG
-                  </Button>
-                </div>
-                <p className="font-mono text-xs text-muted-foreground/80">
-                  No watermark · Full resolution ·{" "}
-                  {transparentView ? "PNG with alpha" : "HD JPEG"}
-                </p>
-              </div>
+                />
+              )}
             </>
           )}
-
-          {/* 背景图库(所有相位可见,支持预选) */}
           <Gallery selected={state.selected} onSelect={onSelect} />
         </div>
       </div>
@@ -635,84 +792,238 @@ export function BackgroundStudio() {
   );
 }
 
-/** 处理视图:下载阶段真实百分比;推理阶段 4 步里程碑 */
-function ProcessingPanel({
-  phase,
-  progress,
-}: {
+function UploadPanel({ error, dragging, onChoose, onDragEnter, onDragLeave, onDrop, onSample }: {
+  error: ErrorCode | null;
+  dragging: boolean;
+  onChoose: () => void;
+  onDragEnter: (event: DragEvent) => void;
+  onDragLeave: (event: DragEvent) => void;
+  onDrop: (event: DragEvent) => void;
+  onSample: (src: string, label: string) => Promise<void>;
+}) {
+  return (
+    <>
+      {error && (
+        <div role="alert" className="animate-pop mb-5 rounded-lg border border-destructive/30 bg-destructive/5 px-4 py-3">
+          <p className="text-sm font-semibold text-destructive">{ERROR_COPY[error].title}</p>
+          <p className="mt-0.5 text-sm text-muted-foreground">{ERROR_COPY[error].hint}</p>
+        </div>
+      )}
+      <div
+        onDragEnter={onDragEnter}
+        onDragLeave={onDragLeave}
+        onDragOver={(event) => event.preventDefault()}
+        onDrop={onDrop}
+        className={`rounded-xl border-2 border-dashed px-6 py-12 text-center transition-all duration-200 ${dragging ? "scale-[1.005] border-primary bg-primary/5" : "border-input hover:border-primary/50"}`}
+      >
+        <span className="mx-auto flex size-13 items-center justify-center rounded-xl bg-primary/10 text-primary">
+          <Upload className="size-6" strokeWidth={1.75} />
+        </span>
+        <Button size="lg" className="mt-5 px-8" onClick={onChoose}>
+          <Upload className="size-4.5" /> Upload photos
+        </Button>
+        <p className="mt-4 text-sm text-muted-foreground">Choose one photo, or select several for batch processing</p>
+        <p className="mt-2 text-sm text-muted-foreground">Drag & drop, or paste from clipboard (⌘/Ctrl + V)</p>
+        <p className="mt-6 flex flex-wrap items-center justify-center gap-1.5 text-xs text-muted-foreground/80">
+          <FileImage className="size-3.5" />
+          JPG · PNG · WebP, up to 22 MB · first use downloads about 76 MB · processed locally
+        </p>
+        <div className="mt-6">
+          <p className="text-xs text-muted-foreground/80">No image? Try one:</p>
+          <div className="mt-2.5 flex items-center justify-center gap-2.5">
+            {SAMPLES.map((sample) => (
+              <button key={sample.src} type="button" onClick={() => void onSample(sample.src, sample.label)} className="group relative size-14 overflow-hidden rounded-lg border border-border transition-transform duration-150 hover:-translate-y-0.5">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img src={sample.src} alt={`Sample: ${sample.label}`} className="size-full object-cover" loading="lazy" />
+                <span className="absolute inset-x-0 bottom-0 bg-foreground/55 py-px text-center text-[10px] font-medium text-white backdrop-blur-sm">{sample.label}</span>
+              </button>
+            ))}
+          </div>
+        </div>
+      </div>
+    </>
+  );
+}
+
+function ProcessingPanel({ phase, progress, onCancel }: {
   phase: "validating" | "processing";
   progress: ProgressInfo | null;
+  onCancel: () => void;
 }) {
   const downloading = progress === null || progress.stage === "download";
   const pct = progress?.stage === "download" ? Math.floor(progress.pct * 100) : 0;
-  const stepIndex =
-    progress?.stage === "compute" ? progress.stepIndex : -1;
-
+  const stepIndex = progress?.stage === "compute" ? progress.stepIndex : -1;
   return (
-    <div className="flex flex-col items-center py-12 text-center" aria-live="polite">
-      <div className="animate-breathe flex size-14 items-center justify-center rounded-2xl bg-primary/10 text-primary">
+    <div data-status-focus tabIndex={-1} className="flex flex-col items-center py-12 text-center" aria-live="polite" aria-busy="true">
+      <div className="animate-breathe flex size-14 items-center justify-center rounded-xl bg-primary/10 text-primary">
         <Layers className="size-6" strokeWidth={1.75} />
       </div>
       <h2 className="mt-6 text-lg font-semibold">
-        {phase === "validating"
-          ? "Reading your photo…"
-          : downloading
-            ? "Loading the AI model"
-            : "Cutting out the subject…"}
+        {phase === "validating" ? "Reading your photo…" : downloading ? "Loading the AI model" : "Cutting out the subject…"}
       </h2>
       <div className="mt-6 w-full max-w-sm">
         {downloading ? (
           <>
-            <p className="font-mono text-4xl font-bold tabular-nums text-primary">
-              {pct}
-              <span className="text-xl">%</span>
-            </p>
+            <p className="font-mono text-4xl font-bold tabular-nums text-primary">{pct}<span className="text-xl">%</span></p>
             <Progress value={pct} className="mt-4 h-2" />
-            <p className="mt-4 text-xs leading-relaxed text-muted-foreground">
-              The first run downloads a ~50 MB model (cached afterwards). The
-              AI then runs locally in your browser — your photo never leaves
-              this device.
-            </p>
+            <p className="mt-4 text-xs leading-relaxed text-muted-foreground">First use downloads about 76 MB of model and runtime files. Browsers normally cache them; your image stays on this device.</p>
           </>
         ) : (
           <ol className="mx-auto max-w-xs space-y-2.5 text-left">
-            {COMPUTE_STEPS.map((label, i) => {
-              const done = i < stepIndex;
-              const current = i === stepIndex;
+            {COMPUTE_STEPS.map((label, index) => {
+              const done = index < stepIndex;
+              const current = index === stepIndex;
               return (
-                <li
-                  key={label}
-                  className={[
-                    "flex items-center gap-3 rounded-lg px-3.5 py-2 text-sm transition-colors",
-                    current
-                      ? "bg-primary/10 font-medium text-primary"
-                      : done
-                        ? "text-muted-foreground"
-                        : "text-muted-foreground/50",
-                  ].join(" ")}
-                >
-                  <span
-                    className={[
-                      "flex size-5 shrink-0 items-center justify-center rounded-full border text-[10px]",
-                      done
-                        ? "border-accent bg-accent text-accent-foreground"
-                        : current
-                          ? "border-primary"
-                          : "border-input",
-                    ].join(" ")}
-                  >
-                    {done ? <Check className="size-3" strokeWidth={3} /> : i + 1}
+                <li key={label} className={`flex items-center gap-3 rounded-lg px-3.5 py-2 text-sm ${current ? "bg-primary/10 font-medium text-primary" : done ? "text-muted-foreground" : "text-muted-foreground/50"}`}>
+                  <span className={`flex size-5 shrink-0 items-center justify-center rounded-full border text-[10px] ${done ? "border-accent bg-accent text-accent-foreground" : current ? "border-primary" : "border-input"}`}>
+                    {done ? <Check className="size-3" strokeWidth={3} /> : index + 1}
                   </span>
                   {label}
-                  {current && (
-                    <span className="animate-shimmer shimmer-bar ml-auto h-2 w-9 rounded-full bg-primary/20" />
-                  )}
                 </li>
               );
             })}
           </ol>
         )}
       </div>
+      <Button variant="outline" size="sm" className="mt-7" onClick={onCancel}><X className="size-4" /> Cancel</Button>
+    </div>
+  );
+}
+
+function ReadyPanel({ state, transparentView, onCompare, onReset, onDownload, onTransparentDownload }: {
+  state: State & { cutout: Cutout };
+  transparentView: boolean;
+  onCompare: (view: "result" | "original") => void;
+  onReset: () => void;
+  onDownload: () => void;
+  onTransparentDownload: () => void;
+}) {
+  const sizeLabel = state.cutout.downsampled
+    ? `${state.cutout.originalWidth}×${state.cutout.originalHeight} → ${state.cutout.width}×${state.cutout.height}`
+    : `${state.cutout.width}×${state.cutout.height}`;
+  return (
+    <>
+      <div data-status-focus className="flex flex-wrap items-center justify-between gap-3" tabIndex={-1}>
+        <div className="flex min-w-0 items-center gap-2.5">
+          <span className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-accent/15 text-accent"><Check className="size-4.5" strokeWidth={2.5} /></span>
+          <p className="truncate font-mono text-xs text-muted-foreground">{state.cutout.fileName} · {sizeLabel} · {formatElapsed(state.cutout.elapsedMs)}</p>
+        </div>
+        <div className="flex flex-wrap items-center gap-2">
+          <Tabs value={state.compare} onValueChange={(value) => onCompare(value as "result" | "original")}>
+            <TabsList><TabsTrigger value="result">Result</TabsTrigger><TabsTrigger value="original">Original</TabsTrigger></TabsList>
+          </Tabs>
+          <Button variant="ghost" size="sm" onClick={onReset} className="text-muted-foreground"><RotateCcw className="size-4" /> Start over</Button>
+        </div>
+      </div>
+      {state.cutout.downsampled && <p className="mt-3 text-xs text-muted-foreground" role="status">This large image was resized for reliable in-browser processing.</p>}
+      <div className="relative mt-4 flex justify-center">
+        <div className={`relative inline-block min-h-40 min-w-40 overflow-hidden rounded-xl border border-border ${state.compare !== "original" && transparentView ? "checkerboard" : ""}`}>
+          {state.compare === "original" && state.originalUrl ? (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img src={state.originalUrl} alt="Original photo" className="block max-h-[62vh] w-auto max-w-full" />
+          ) : transparentView ? (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img src={state.cutout.url} alt="Cutout with transparent background" className="block max-h-[62vh] w-auto max-w-full" />
+          ) : state.previewUrl ? (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img src={state.previewUrl} alt="Photo with new background" className="block max-h-[62vh] w-auto max-w-full" />
+          ) : (
+            <div className="flex h-64 w-64 items-center justify-center"><Loader2 className="size-6 animate-spin text-muted-foreground" /></div>
+          )}
+          {state.compositing && state.previewUrl && <div className="absolute inset-0 animate-pulse bg-background/30" />}
+          {transparentView && state.compare === "result" && (
+            <div className="absolute inset-x-0 bottom-0 flex justify-center bg-gradient-to-t from-background/80 to-transparent px-4 pt-10 pb-3">
+              <span className="rounded-full bg-foreground/80 px-4 py-1.5 text-xs font-medium text-background backdrop-blur-sm">Pick a background below</span>
+            </div>
+          )}
+        </div>
+      </div>
+      <div className="mt-5 flex flex-col items-center gap-3">
+        <div className="flex flex-wrap items-center justify-center gap-3">
+          <Button size="lg" disabled={state.exporting} onClick={onDownload} className="bg-accent px-8 text-accent-foreground hover:bg-accent/90">
+            {state.exporting ? <Loader2 className="size-4.5 animate-spin" /> : state.downloaded ? <Check className="size-4.5" /> : <Download className="size-4.5" />}
+            {state.exporting ? "Exporting…" : state.downloaded ? "Downloaded" : "Download HD"}
+          </Button>
+          <Button variant="outline" onClick={onTransparentDownload}><ImageDown className="size-4" /> Transparent PNG</Button>
+        </div>
+        <p className="font-mono text-xs text-muted-foreground/80">No watermark · Full processing resolution · {transparentView ? "PNG with alpha" : "HD JPEG"}</p>
+      </div>
+    </>
+  );
+}
+
+function BatchPanel({ items, busy, paused, doneCount, exportingId, onAdd, onCancel, onResume, onClear, onExit, onRemove, onRetry, onDownload }: {
+  items: BatchItem[];
+  busy: boolean;
+  paused: boolean;
+  doneCount: number;
+  exportingId: number | null;
+  onAdd: () => void;
+  onCancel: () => void;
+  onResume: () => void;
+  onClear: () => void;
+  onExit: () => void;
+  onRemove: (id: number) => void;
+  onRetry: (id: number) => void;
+  onDownload: (item: BatchItem) => void;
+}) {
+  return (
+    <div data-status-focus tabIndex={-1} aria-live="polite">
+      <div className="flex flex-wrap items-start justify-between gap-4">
+        <div>
+          <h2 className="text-lg font-bold">Batch queue</h2>
+          <p className="mt-1 text-sm text-muted-foreground">{items.length} {items.length === 1 ? "photo" : "photos"} · {doneCount} complete</p>
+        </div>
+        <div className="flex flex-wrap gap-2">
+          <Button variant="outline" size="sm" onClick={onAdd}><Plus className="size-4" /> Add photos</Button>
+          {busy ? (
+            <Button variant="outline" size="sm" onClick={onCancel}><X className="size-4" /> Cancel current</Button>
+          ) : paused || items.some((item) => item.status === "queued") ? (
+            <Button size="sm" onClick={onResume}><RotateCcw className="size-4" /> Resume queue</Button>
+          ) : null}
+          <Button variant="ghost" size="icon" title="Clear queue" aria-label="Clear queue" onClick={onClear}><Trash2 className="size-4" /></Button>
+          <Button variant="ghost" size="icon" title="Exit batch mode" aria-label="Exit batch mode" onClick={onExit}><X className="size-4" /></Button>
+        </div>
+      </div>
+      <div className="mt-5 space-y-2" aria-busy={busy}>
+        {items.map((item) => {
+          const active = item.status === "validating" || item.status === "processing";
+          const progressLabel = item.progress?.stage === "download"
+            ? `${Math.floor(item.progress.pct * 100)}% model download`
+            : item.progress?.stage === "compute"
+              ? COMPUTE_STEPS[item.progress.stepIndex]
+              : item.status;
+          return (
+            <div key={item.id} className="grid grid-cols-[3rem_minmax(0,1fr)_auto] items-center gap-3 rounded-lg border border-border p-2.5">
+              <div className={`relative size-12 overflow-hidden rounded-md border border-border ${item.outputUrl ? "checkerboard-fine" : ""}`}>
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img src={item.outputUrl ?? item.sourceUrl} alt="" className="size-full object-cover" />
+                {active && <span className="absolute inset-0 flex items-center justify-center bg-background/70"><Loader2 className="size-4 animate-spin" /></span>}
+              </div>
+              <div className="min-w-0">
+                <p className="truncate text-sm font-medium">{item.name}</p>
+                <p className={`mt-0.5 truncate text-xs ${item.error ? "text-destructive" : "text-muted-foreground"}`}>
+                  {item.error ? ERROR_COPY[item.error].title : progressLabel}
+                  {item.downsampled ? ` · resized to ${item.width}×${item.height}` : ""}
+                  {item.status === "done" ? ` · ${formatElapsed(item.elapsedMs)}` : ""}
+                </p>
+              </div>
+              <div className="flex items-center gap-1">
+                {item.status === "done" && (
+                  <Button variant="outline" size="icon" title={`Download ${item.name}`} aria-label={`Download ${item.name}`} disabled={busy || exportingId !== null} onClick={() => onDownload(item)}>
+                    {exportingId === item.id ? <Loader2 className="size-4 animate-spin" /> : <Download className="size-4" />}
+                  </Button>
+                )}
+                {item.status === "error" && (
+                  <Button variant="outline" size="icon" title={`Retry ${item.name}`} aria-label={`Retry ${item.name}`} disabled={busy} onClick={() => onRetry(item.id)}><RotateCcw className="size-4" /></Button>
+                )}
+                <Button variant="ghost" size="icon" title={`Remove ${item.name}`} aria-label={`Remove ${item.name}`} disabled={active} onClick={() => onRemove(item.id)}><Trash2 className="size-4" /></Button>
+              </div>
+            </div>
+          );
+        })}
+      </div>
+      <p className="mt-4 text-xs leading-relaxed text-muted-foreground">Photos process one at a time to limit memory use. Choose a background below, then download each completed result.</p>
     </div>
   );
 }

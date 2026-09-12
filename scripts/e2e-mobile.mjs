@@ -2,6 +2,7 @@
 import { chromium } from "playwright";
 import { writeFileSync, rmSync } from "node:fs";
 
+const baseUrl = process.env.BASE_URL ?? "http://localhost:3000";
 const browser = await chromium.launch({ channel: "chrome" });
 
 // —— 移动端 390px:首页布局 ——
@@ -13,8 +14,8 @@ const mctx = await browser.newContext({
     "Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.0 Mobile/15E148 Safari/604.1",
 });
 const mpage = await mctx.newPage();
-await mpage.goto("http://localhost:3000", { waitUntil: "domcontentloaded" });
-await mpage.waitForSelector("text=Upload a photo", { timeout: 60_000 });
+await mpage.goto(baseUrl, { waitUntil: "domcontentloaded" });
+await mpage.waitForSelector("text=Upload photos", { timeout: 60_000 });
 await mpage.waitForTimeout(800);
 await mpage.screenshot({ path: "shot-mobile.png", fullPage: true });
 console.log("mobile screenshot saved");
@@ -33,8 +34,8 @@ await mpage.screenshot({ path: "shot-mobile-result.png" });
 // —— 桌面:格式校验错误路径 ——
 const ctx = await browser.newContext({ viewport: { width: 1440, height: 900 } });
 const page = await ctx.newPage();
-await page.goto("http://localhost:3000", { waitUntil: "domcontentloaded" });
-await page.waitForSelector("text=Upload a photo", { timeout: 60_000 });
+await page.goto(baseUrl, { waitUntil: "domcontentloaded" });
+await page.waitForSelector("text=Upload photos", { timeout: 60_000 });
 
 writeFileSync("/tmp/fake.gif", "GIF89a");
 await page.setInputFiles('input[type="file"]', "/tmp/fake.gif");
