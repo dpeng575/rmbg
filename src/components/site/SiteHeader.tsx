@@ -2,10 +2,10 @@ import Link from "next/link";
 import { Replace } from "lucide-react";
 
 const NAV = [
-  { label: "How it works", href: "#how" },
-  { label: "Backgrounds", href: "#backgrounds" },
-  { label: "Why SwitchBG", href: "#why" },
-  { label: "FAQ", href: "#faq" },
+  { label: "How it works", href: "/#how" },
+  { label: "Backgrounds", href: "/#backgrounds" },
+  { label: "Why SwitchBG", href: "/#why" },
+  { label: "FAQ", href: "/#faq" },
 ];
 
 export function SiteHeader() {
@@ -23,18 +23,18 @@ export function SiteHeader() {
 
         <nav className="hidden items-center gap-7 text-sm text-muted-foreground md:flex" aria-label="Main">
           {NAV.map((item) => (
-            <a key={item.href} href={item.href} className="transition-colors hover:text-foreground">
+            <Link key={item.href} href={item.href} className="transition-colors hover:text-foreground">
               {item.label}
-            </a>
+            </Link>
           ))}
         </nav>
 
-        <a
-          href="#tool"
+        <Link
+          href="/#tool"
           className="rounded-full bg-accent px-5 py-2 text-sm font-semibold text-accent-foreground shadow-sm transition-transform duration-150 hover:scale-[1.03] active:scale-[0.98]"
         >
           Change a background
-        </a>
+        </Link>
       </div>
     </header>
   );

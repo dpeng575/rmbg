@@ -420,7 +420,8 @@ export function BackgroundStudio() {
                 </p>
                 <p className="mt-6 flex items-center justify-center gap-1.5 text-xs text-muted-foreground/80">
                   <FileImage className="size-3.5" />
-                  JPG · PNG · WebP, up to 22 MB — processed locally, never uploaded
+                  JPG · PNG · WebP, up to 22 MB — processed in your browser,
+                  not uploaded by SwitchBG
                 </p>
                 <div className="mt-6">
                   <p className="text-xs text-muted-foreground/80">
@@ -669,9 +670,9 @@ function ProcessingPanel({
             </p>
             <Progress value={pct} className="mt-4 h-2" />
             <p className="mt-4 text-xs leading-relaxed text-muted-foreground">
-              The first run downloads a ~50 MB model (cached afterwards). The
-              AI then runs locally in your browser — your photo never leaves
-              this device.
+              The first run may download about 76 MB of AI model and runtime
+              files, which browsers normally cache. Image processing then runs
+              in your browser; the image file is not uploaded by SwitchBG.
             </p>
           </>
         ) : (
