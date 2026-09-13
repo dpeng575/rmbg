@@ -1,6 +1,6 @@
 "use client";
 
-import { Check, EyeOff } from "lucide-react";
+import { Check, EyeOff, Upload } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   CATEGORY_LABELS,
@@ -15,6 +15,7 @@ import {
 type Props = {
   selected: BackgroundOption | null;
   onSelect: (bg: BackgroundOption) => void;
+  onUpload: (file: File) => void;
 };
 
 /** 透明选项的缩略(棋盘格 + 关闭眼睛 = 无背景) */
@@ -25,7 +26,8 @@ function TransparentSwatch() {
 }
 
 /** 背景图库:快速项(透明/纯色/渐变)+ 三分类照片网格 */
-export function Gallery({ selected, onSelect }: Props) {
+export function Gallery({ selected, onSelect, onUpload }: Props) {
+  const inputId = "custom-background-upload";
   return (
     <div className="mt-10">
       <div className="flex flex-wrap items-center justify-between gap-2">
@@ -74,6 +76,17 @@ export function Gallery({ selected, onSelect }: Props) {
             </button>
           );
         })}
+      </div>
+
+      <div className="mt-4 flex items-center justify-between gap-3 rounded-lg border border-dashed border-border bg-secondary/40 px-3 py-2.5">
+        <div className="min-w-0">
+          <p className="text-sm font-medium">Use your own background</p>
+          <p className="truncate text-xs text-muted-foreground">Choose a local JPG, PNG, or WebP. It stays on this device.</p>
+        </div>
+        <label htmlFor={inputId} className="inline-flex shrink-0 cursor-pointer items-center gap-1.5 rounded-md border border-border bg-background px-3 py-1.5 text-sm font-medium transition-colors hover:border-primary/50">
+          <Upload className="size-3.5" /> Upload
+          <input id={inputId} type="file" accept="image/jpeg,image/png,image/webp" className="sr-only" onChange={(event) => { const file = event.target.files?.[0]; if (file) onUpload(file); event.target.value = ""; }} />
+        </label>
       </div>
 
       {/* 照片图库:三分类 */}

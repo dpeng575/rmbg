@@ -203,6 +203,7 @@ export function BackgroundStudio() {
   const selectedRef = useRef(state.selected);
   const cutoutRef = useRef(state.cutout);
   const previewUrlRef = useRef<string | null>(null);
+  const customBackgroundRef = useRef<string | null>(null);
 
   const updateBatch = useCallback(
     (updater: (current: BatchItem[]) => BatchItem[]) => {
@@ -233,6 +234,10 @@ export function BackgroundStudio() {
     singleUrlsRef.current.clear();
     previewUrlRef.current = null;
   }, []);
+  const releaseCustomBackground = useCallback(() => {
+    if (customBackgroundRef.current) URL.revokeObjectURL(customBackgroundRef.current);
+    customBackgroundRef.current = null;
+  }, []);
   const releaseBatch = useCallback(() => {
     for (const url of batchUrlsRef.current) URL.revokeObjectURL(url);
     batchUrlsRef.current.clear();
@@ -260,9 +265,10 @@ export function BackgroundStudio() {
       controllerRef.current?.abort();
       taskIdRef.current += 1;
       releaseSingle();
+      releaseCustomBackground();
       releaseBatch();
     },
-    [releaseBatch, releaseSingle],
+    [releaseBatch, releaseCustomBackground, releaseSingle],
   );
 
   const setPreview = useCallback(
@@ -540,9 +546,10 @@ export function BackgroundStudio() {
       taskIdRef.current += 1;
       compositeIdRef.current += 1;
       releaseSingle();
+      releaseCustomBackground();
       dispatch({ type: "reset" });
     },
-    [releaseSingle, state.phase],
+    [releaseCustomBackground, releaseSingle, state.phase],
   );
   const cancelBatch = useCallback(() => {
     batchStopRef.current = true;
@@ -623,6 +630,12 @@ export function BackgroundStudio() {
     },
     [applyComposite],
   );
+  const onUploadBackground = useCallback((file: File) => {
+    releaseCustomBackground();
+    const src = URL.createObjectURL(file);
+    customBackgroundRef.current = src;
+    onSelect({ kind: "image", id: "custom-background", label: file.name, src });
+  }, [onSelect, releaseCustomBackground]);
   const onDownload = useCallback(async () => {
     const cutout = cutoutRef.current;
     if (!cutout) return;
@@ -772,20 +785,23 @@ export function BackgroundStudio() {
                 </div>
               )}
               {ready && state.cutout && (
-                <ReadyPanel
-                  state={{ ...state, cutout: state.cutout }}
-                  transparentView={Boolean(transparentView)}
-                  onCompare={(view) => dispatch({ type: "compare", view })}
-                  onReset={() => resetSingle(true)}
-                  onDownload={() => void onDownload()}
-                  onTransparentDownload={() =>
-                    downloadBlob(state.cutout!.blob, resultFilename(state.cutout!.fileName, "png"))
-                  }
-                />
+                <div className="grid gap-8 lg:grid-cols-[minmax(0,1.25fr)_minmax(18rem,0.75fr)] lg:items-start">
+                  <ReadyPanel
+                    state={{ ...state, cutout: state.cutout }}
+                    transparentView={Boolean(transparentView)}
+                    onCompare={(view) => dispatch({ type: "compare", view })}
+                    onReset={() => resetSingle(true)}
+                    onDownload={() => void onDownload()}
+                    onTransparentDownload={() =>
+                      downloadBlob(state.cutout!.blob, resultFilename(state.cutout!.fileName, "png"))
+                    }
+                  />
+                  <Gallery selected={state.selected} onSelect={onSelect} onUpload={onUploadBackground} />
+                </div>
               )}
             </>
           )}
-          <Gallery selected={state.selected} onSelect={onSelect} />
+          {state.phase !== "ready" && <Gallery selected={state.selected} onSelect={onSelect} onUpload={onUploadBackground} />}
         </div>
       </div>
     </section>
