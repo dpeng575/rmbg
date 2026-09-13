@@ -28,7 +28,7 @@ import { Progress } from "@/components/ui/progress";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Gallery } from "./Gallery";
 import { previewSize, renderComposite } from "@/lib/composite";
-import { downloadBlob, formatElapsed, resultFilename } from "@/lib/download";
+import { saveBlob, formatElapsed, resultFilename } from "@/lib/download";
 import { COMPUTE_STEPS, classifyError, removeBg } from "@/lib/remove-bg";
 import {
   ERROR_COPY,
@@ -591,7 +591,7 @@ export function BackgroundStudio() {
     setBatchExporting(item.id);
     try {
       if (!background || background.kind === "transparent") {
-        downloadBlob(item.outputBlob, resultFilename(item.name, "png"));
+        await saveBlob(item.outputBlob, resultFilename(item.name, "png"));
         return;
       }
       const bitmap = await createImageBitmap(item.outputBlob);
@@ -602,7 +602,7 @@ export function BackgroundStudio() {
           { width: item.width, height: item.height },
           0.95,
         );
-        downloadBlob(blob, resultFilename(item.name, "jpg"));
+        await saveBlob(blob, resultFilename(item.name, "jpg"));
       } finally {
         bitmap.close();
       }
@@ -628,8 +628,9 @@ export function BackgroundStudio() {
     if (!cutout) return;
     const selected = selectedRef.current;
     if (!selected || selected.kind === "transparent") {
-      downloadBlob(cutout.blob, resultFilename(cutout.fileName, "png"));
-      dispatch({ type: "downloaded" });
+      if (await saveBlob(cutout.blob, resultFilename(cutout.fileName, "png"))) {
+        dispatch({ type: "downloaded" });
+      }
       return;
     }
     dispatch({ type: "exporting", on: true });
@@ -640,8 +641,8 @@ export function BackgroundStudio() {
         { width: cutout.width, height: cutout.height },
         0.95,
       );
-      downloadBlob(blob, resultFilename(cutout.fileName, "jpg"));
-      dispatch({ type: "downloaded" });
+      const saved = await saveBlob(blob, resultFilename(cutout.fileName, "jpg"));
+      if (saved) dispatch({ type: "downloaded" });
     } catch (error) {
       console.error("[switchbg] export failed:", error);
     } finally {
@@ -779,7 +780,7 @@ export function BackgroundStudio() {
                   onReset={() => resetSingle(true)}
                   onDownload={() => void onDownload()}
                   onTransparentDownload={() =>
-                    downloadBlob(state.cutout!.blob, resultFilename(state.cutout!.fileName, "png"))
+                    void saveBlob(state.cutout!.blob, resultFilename(state.cutout!.fileName, "png"))
                   }
                 />
               )}
