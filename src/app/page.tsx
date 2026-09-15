@@ -175,7 +175,7 @@ export default function Home() {
           </div>
         </section>
 
-        {/* —— FAQ(服务端渲染,h3 问题,答案 forceMount 保证爬虫可读) —— */}
+        {/* —— FAQ(h3 问题；答案同时写入上方 FAQPage JSON-LD) —— */}
         <section id="faq" className="scroll-mt-20 py-16 sm:py-20">
           <div className="mx-auto max-w-3xl px-4 sm:px-6">
             <h2 className="text-2xl font-bold tracking-tight sm:text-3xl">
@@ -188,10 +188,7 @@ export default function Home() {
                   <AccordionTrigger className="text-sm sm:text-base">
                     {q}
                   </AccordionTrigger>
-                  <AccordionContent
-                    forceMount
-                    className="text-sm leading-relaxed text-muted-foreground"
-                  >
+                  <AccordionContent className="text-sm leading-relaxed text-muted-foreground">
                     {a}
                   </AccordionContent>
                 </AccordionItem>
