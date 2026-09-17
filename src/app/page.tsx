@@ -19,6 +19,7 @@ import {
   AccordionTrigger,
 } from "@/components/ui/accordion";
 import { BackgroundStudio } from "@/components/tool/BackgroundStudio";
+import { QualityShowcase } from "@/components/site/QualityShowcase";
 import { SiteHeader } from "@/components/site/SiteHeader";
 import { SiteFooter } from "@/components/site/SiteFooter";
 import { FAQS, WHY_BULLETS } from "@/content/seo";
@@ -153,6 +154,9 @@ export default function Home() {
 
         {/* —— 工具区(唯一的客户端岛) —— */}
         <BackgroundStudio />
+
+        {/* —— 效果展示:分类示例 + 前后对比滑块 —— */}
+        <QualityShowcase />
 
         {/* —— 正文区块(服务端渲染,文案逐字) —— */}
         <section id="how" className="scroll-mt-20 border-y border-border py-16 sm:py-20">
