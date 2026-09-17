@@ -724,7 +724,7 @@ export function BackgroundStudio() {
 
   return (
     <section id="tool" className="scroll-mt-20 pt-10 pb-6">
-      <div className="mx-auto max-w-4xl px-4 sm:px-6">
+      <div className="mx-auto max-w-6xl px-4 sm:px-6">
         <div ref={toolRef} className="rounded-xl border border-border bg-card p-5 shadow-sm sm:p-8">
           <input
             ref={inputRef}
@@ -786,7 +786,7 @@ export function BackgroundStudio() {
                 </div>
               )}
               {ready && state.cutout && (
-                <div className="grid gap-8 lg:grid-cols-[minmax(0,1.25fr)_minmax(18rem,0.75fr)] lg:items-start">
+                <div className="grid gap-8 lg:grid-cols-[minmax(0,1.7fr)_minmax(19rem,0.8fr)] lg:items-start">
                   <ReadyPanel
                     state={{ ...state, cutout: state.cutout }}
                     transparentView={Boolean(transparentView)}
@@ -797,7 +797,9 @@ export function BackgroundStudio() {
                       void saveBlob(state.cutout!.blob, resultFilename(state.cutout!.fileName, "png"))
                     }
                   />
-                  <Gallery selected={state.selected} onSelect={onSelect} onUpload={onUploadBackground} />
+                  <aside className="border-t border-border pt-6 lg:border-t-0 lg:border-l lg:pt-0 lg:pl-8">
+                    <Gallery compact selected={state.selected} onSelect={onSelect} onUpload={onUploadBackground} />
+                  </aside>
                 </div>
               )}
             </>
@@ -919,7 +921,7 @@ function ReadyPanel({ state, transparentView, onCompare, onReset, onDownload, on
     ? `${state.cutout.originalWidth}×${state.cutout.originalHeight} → ${state.cutout.width}×${state.cutout.height}`
     : `${state.cutout.width}×${state.cutout.height}`;
   return (
-    <>
+    <div className="min-w-0">
       <div data-status-focus className="flex flex-wrap items-center justify-between gap-3" tabIndex={-1}>
         <div className="flex min-w-0 items-center gap-2.5">
           <span className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-accent/15 text-accent"><Check className="size-4.5" strokeWidth={2.5} /></span>
@@ -965,7 +967,7 @@ function ReadyPanel({ state, transparentView, onCompare, onReset, onDownload, on
         </div>
         <p className="font-mono text-xs text-muted-foreground/80">No watermark · Full processing resolution · {transparentView ? "PNG with alpha" : "HD JPEG"}</p>
       </div>
-    </>
+    </div>
   );
 }
 
