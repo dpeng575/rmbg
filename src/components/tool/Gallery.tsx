@@ -16,6 +16,7 @@ type Props = {
   selected: BackgroundOption | null;
   onSelect: (bg: BackgroundOption) => void;
   onUpload: (file: File) => void;
+  compact?: boolean;
 };
 
 /** 透明选项的缩略(棋盘格 + 关闭眼睛 = 无背景) */
@@ -26,10 +27,10 @@ function TransparentSwatch() {
 }
 
 /** 背景图库:快速项(透明/纯色/渐变)+ 三分类照片网格 */
-export function Gallery({ selected, onSelect, onUpload }: Props) {
+export function Gallery({ selected, onSelect, onUpload, compact = false }: Props) {
   const inputId = "custom-background-upload";
   return (
-    <div className="mt-10">
+    <div className={compact ? "" : "mt-10"}>
       <div className="flex flex-wrap items-center justify-between gap-2">
         <h2 className="text-sm font-semibold text-foreground">
           Pick a background
@@ -104,6 +105,7 @@ export function Gallery({ selected, onSelect, onUpload }: Props) {
               category={cat}
               selected={selected}
               onSelect={onSelect}
+              compact={compact}
             />
           </TabsContent>
         ))}
@@ -116,13 +118,15 @@ function BackgroundGrid({
   category,
   selected,
   onSelect,
+  compact,
 }: {
   category: BgCategory;
   selected: BackgroundOption | null;
   onSelect: (bg: BackgroundOption) => void;
+  compact: boolean;
 }) {
   return (
-    <div className="mt-4 grid grid-cols-3 gap-2.5 sm:grid-cols-6">
+    <div className={`mt-4 grid grid-cols-3 gap-2.5 ${compact ? "" : "sm:grid-cols-6"}`}>
       {LIBRARY[category].map((bg) => {
         const active = selected?.id === bg.id;
         return (
