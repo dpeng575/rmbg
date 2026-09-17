@@ -3,8 +3,8 @@ import { Replace } from "lucide-react";
 
 const NAV = [
   { label: "How it works", href: "/#how" },
-  { label: "Backgrounds", href: "/#backgrounds" },
-  { label: "Why SwitchBG", href: "/#why" },
+  { label: "Ideas", href: "/#ideas" },
+  { label: "Better results", href: "/#tips" },
   { label: "FAQ", href: "/#faq" },
 ];
 
