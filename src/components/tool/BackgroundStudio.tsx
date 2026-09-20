@@ -670,7 +670,8 @@ export function BackgroundStudio() {
     setBatchExporting(item.id);
     try {
       if (!background || background.kind === "transparent") {
-        downloadBlob(item.outputBlob, resultFilename(item.name, "png"));
+        const saved = await saveBlob(item.outputBlob, resultFilename(item.name, "png"));
+        if (!saved) return;
         trackEvent("download_completed", {
           mode: "batch",
           format: "png",
@@ -686,7 +687,8 @@ export function BackgroundStudio() {
           { width: item.width, height: item.height },
           0.95,
         );
-        downloadBlob(blob, resultFilename(item.name, "jpg"));
+        const saved = await saveBlob(blob, resultFilename(item.name, "jpg"));
+        if (!saved) return;
         trackEvent("download_completed", {
           mode: "batch",
           format: "jpeg",
@@ -724,7 +726,8 @@ export function BackgroundStudio() {
     if (!cutout) return;
     const selected = selectedRef.current;
     if (!selected || selected.kind === "transparent") {
-      downloadBlob(cutout.blob, resultFilename(cutout.fileName, "png"));
+      const saved = await saveBlob(cutout.blob, resultFilename(cutout.fileName, "png"));
+      if (!saved) return;
       dispatch({ type: "downloaded" });
       trackEvent("download_completed", {
         mode: "single",
@@ -741,7 +744,8 @@ export function BackgroundStudio() {
         { width: cutout.width, height: cutout.height },
         0.95,
       );
-      downloadBlob(blob, resultFilename(cutout.fileName, "jpg"));
+      const saved = await saveBlob(blob, resultFilename(cutout.fileName, "jpg"));
+      if (!saved) return;
       dispatch({ type: "downloaded" });
       trackEvent("download_completed", {
         mode: "single",
@@ -816,10 +820,11 @@ export function BackgroundStudio() {
     trackEvent("comparison_used", { view });
   }, []);
 
-  const onTransparentDownload = useCallback(() => {
+  const onTransparentDownload = useCallback(async () => {
     const cutout = cutoutRef.current;
     if (!cutout) return;
-    downloadBlob(cutout.blob, resultFilename(cutout.fileName, "png"));
+    const saved = await saveBlob(cutout.blob, resultFilename(cutout.fileName, "png"));
+    if (!saved) return;
     dispatch({ type: "downloaded" });
     trackEvent("download_completed", {
       mode: "single",

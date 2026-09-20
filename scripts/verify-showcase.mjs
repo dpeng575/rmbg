@@ -34,11 +34,13 @@ if (Number(now) > 40 || Number(now) < 20) throw new Error("拖拽后位置不符
 
 // 键盘操作
 await slider.focus();
-await page.keyboard.press("ArrowRight");
-await page.keyboard.press("ArrowRight");
+await page.keyboard.press("End");
 now = await slider.getAttribute("aria-valuenow");
-console.log("after keys pos:", now);
-if (Number(now) !== Number(await slider.getAttribute("aria-valuenow"))) throw new Error("键盘无效");
+console.log("after End key pos:", now);
+if (Number(now) !== 100) throw new Error("滑块无法到达最右端: " + now);
+await page.keyboard.press("Home");
+now = await slider.getAttribute("aria-valuenow");
+if (Number(now) !== 0) throw new Error("滑块无法到达最左端: " + now);
 
 // tab 切换到 Products / Pets
 await page.click('#quality [role="tab"]:has-text("Products")');

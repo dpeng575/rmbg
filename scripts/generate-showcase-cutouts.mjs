@@ -6,11 +6,16 @@ import { mkdirSync } from "node:fs";
 
 const baseUrl = process.env.BASE_URL ?? "http://localhost:3000";
 const outDir = process.env.OUT_DIR ?? "public/samples";
-const SAMPLES = [
+const samples = [
   { label: "Portrait", file: "portrait-cutout.png" },
   { label: "Product", file: "product-cutout.png" },
   { label: "Pet", file: "pet-cutout.png" },
 ];
+const SAMPLES = process.env.SAMPLE
+  ? samples.filter((sample) => sample.label.toLowerCase() === process.env.SAMPLE.toLowerCase())
+  : samples;
+
+if (!SAMPLES.length) throw new Error(`Unknown SAMPLE: ${process.env.SAMPLE}`);
 
 mkdirSync(outDir, { recursive: true });
 const browser = await chromium.launch({ channel: "chrome" });
