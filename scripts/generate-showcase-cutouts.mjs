@@ -9,7 +9,7 @@ const outDir = process.env.OUT_DIR ?? "public/samples";
 const samples = [
   { label: "Portrait", file: "portrait-cutout.png" },
   { label: "Product", file: "product-cutout.png" },
-  { label: "Pet", file: "pet-cutout.png" },
+  { label: "Pet", file: "pet-studio-cutout.png" },
 ];
 const SAMPLES = process.env.SAMPLE
   ? samples.filter((sample) => sample.label.toLowerCase() === process.env.SAMPLE.toLowerCase())

@@ -180,7 +180,7 @@ type InputSource = { blob: Blob; name: string };
 const SAMPLES = [
   { src: "/samples/portrait.jpg", label: "Portrait" },
   { src: "/samples/product.jpg", label: "Product" },
-  { src: "/samples/pet.jpg", label: "Pet" },
+  { src: "/samples/pet-studio.jpg", label: "Pet" },
 ] as const;
 
 function errorCode(error: unknown): ErrorCode {

@@ -52,7 +52,7 @@ const USE_CASES = [
       "Replace a distracting background with a calm color or a setting that suits your profile.",
   },
   {
-    image: "/samples/pet.jpg",
+    image: "/samples/pet-studio.jpg",
     alt: "Pet photo suitable for a sticker or keepsake",
     title: "Pets and keepsakes",
     description:
