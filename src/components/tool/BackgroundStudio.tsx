@@ -36,7 +36,7 @@ import {
   type UploadSource,
 } from "@/lib/analytics";
 import { previewSize, renderComposite } from "@/lib/composite";
-import { downloadBlob, formatElapsed, resultFilename } from "@/lib/download";
+import { saveBlob, formatElapsed, resultFilename } from "@/lib/download";
 import { COMPUTE_STEPS, classifyError, removeBg } from "@/lib/remove-bg";
 import {
   ERROR_COPY,
