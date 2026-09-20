@@ -1,3 +1,3 @@
 # Sample image attributions
 
-- `pet.jpg`: “Cat sitting on a desk (42921038494)” by freestocks.org, via Wikimedia Commons. Public domain dedication (CC0): https://commons.wikimedia.org/wiki/File:Cat_sitting_on_a_desk_(42921038494).jpg
+- `pet.jpg`: “Cinnamon42-300” by Dr. Kristina Narfstrom, University of Missouri-Columbia, via Wikimedia Commons. Released into the public domain: https://commons.wikimedia.org/wiki/File:Cinnamon42-300.jpg

@@ -31,15 +31,15 @@ const SHOWCASE = [
     before: "/samples/pet.jpg",
     after: "/samples/pet-cutout.png",
     alt: "Pet photo before and after background removal",
-    width: 1200,
-    height: 826,
+    width: 960,
+    height: 810,
   },
 ] as const;
 
 const STAGE_MAX_HEIGHT = 460;
 
-const MIN_POS = 6;
-const MAX_POS = 94;
+const MIN_POS = 0;
+const MAX_POS = 100;
 
 /** 棋盘格:透明结果区域的视觉约定,避免被误认为白底 */
 const CHECKER_STYLE = {
@@ -113,35 +113,46 @@ export function QualityShowcase() {
           onPointerMove={(e) => {
             if (e.currentTarget.hasPointerCapture(e.pointerId)) updateFromClientX(e.clientX);
           }}
-          className="relative mx-auto mt-6 w-full cursor-ew-resize touch-none select-none overflow-hidden rounded-[8px] border border-border"
+          className="relative mx-auto mt-6 w-full cursor-ew-resize touch-none select-none"
           style={{
-            ...CHECKER_STYLE,
             aspectRatio: `${sample.width} / ${sample.height}`,
             maxWidth: `min(100%, ${STAGE_MAX_HEIGHT * (sample.width / sample.height)}px)`,
             maxHeight: STAGE_MAX_HEIGHT,
           }}
         >
-          {/* 原图:滑块左侧 */}
-          <Image
-            key={`${sample.id}-before`}
-            src={sample.before}
-            alt={`Original photo (${sample.label})`}
-            fill
-            sizes="(min-width: 896px) 896px, 100vw"
-            className="object-contain"
-            style={{ clipPath: `inset(0 ${100 - pos}% 0 0)` }}
-            priority={false}
-          />
-          {/* 抠图结果:滑块右侧,透明处露出棋盘格 */}
-          <Image
-            key={`${sample.id}-after`}
-            src={sample.after}
-            alt={`Background removed (${sample.label})`}
-            fill
-            sizes="(min-width: 896px) 896px, 100vw"
-            className="object-contain"
-            style={{ clipPath: `inset(0 0 0 ${pos}%)` }}
-          />
+          <div
+            className="absolute inset-0 overflow-hidden rounded-[8px] border border-border"
+            style={CHECKER_STYLE}
+          >
+            {/* 原图:滑块左侧 */}
+            <Image
+              key={`${sample.id}-before`}
+              src={sample.before}
+              alt={`Original photo (${sample.label})`}
+              fill
+              sizes="(min-width: 896px) 896px, 100vw"
+              className="object-contain"
+              style={{ clipPath: `inset(0 ${100 - pos}% 0 0)` }}
+              priority={false}
+            />
+            {/* 抠图结果:滑块右侧,透明处露出棋盘格 */}
+            <Image
+              key={`${sample.id}-after`}
+              src={sample.after}
+              alt={`Background removed (${sample.label})`}
+              fill
+              sizes="(min-width: 896px) 896px, 100vw"
+              className="object-contain"
+              style={{ clipPath: `inset(0 0 0 ${pos}%)` }}
+            />
+
+            <span className="absolute top-3 left-3 rounded-full bg-foreground/70 px-2.5 py-1 text-xs font-medium text-background backdrop-blur-sm">
+              Before
+            </span>
+            <span className="absolute top-3 right-3 rounded-full bg-background/80 px-2.5 py-1 text-xs font-medium text-foreground backdrop-blur-sm">
+              After
+            </span>
+          </div>
 
           <div
             role="slider"
@@ -159,12 +170,6 @@ export function QualityShowcase() {
             </div>
           </div>
 
-          <span className="absolute top-3 left-3 rounded-full bg-foreground/70 px-2.5 py-1 text-xs font-medium text-background backdrop-blur-sm">
-            Before
-          </span>
-          <span className="absolute top-3 right-3 rounded-full bg-background/80 px-2.5 py-1 text-xs font-medium text-foreground backdrop-blur-sm">
-            After
-          </span>
         </div>
 
         <p className="mt-4 text-center text-xs text-muted-foreground">
