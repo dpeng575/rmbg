@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { AnalyticsSettingsButton } from "@/components/analytics/AnalyticsSettingsButton";
 
 const LEGAL_LINKS = [
   { label: "Model License", href: "/model-license" },
@@ -20,6 +21,7 @@ export function SiteFooter() {
               {link.label}
             </Link>
           ))}
+          <AnalyticsSettingsButton />
         </nav>
       </div>
     </footer>

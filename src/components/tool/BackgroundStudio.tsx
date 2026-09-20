@@ -27,6 +27,14 @@ import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Gallery } from "./Gallery";
+import {
+  countBucket,
+  durationBucket,
+  trackEvent,
+  type BackgroundType,
+  type FailureReason,
+  type UploadSource,
+} from "@/lib/analytics";
 import { previewSize, renderComposite } from "@/lib/composite";
 import { saveBlob, formatElapsed, resultFilename } from "@/lib/download";
 import { COMPUTE_STEPS, classifyError, removeBg } from "@/lib/remove-bg";
@@ -179,6 +187,18 @@ function errorCode(error: unknown): ErrorCode {
   return error instanceof ImageValidationError ? error.code : classifyError(error);
 }
 
+function backgroundType(background: BackgroundOption | null): BackgroundType {
+  if (!background || background.kind === "transparent") return "transparent";
+  if (background.kind === "image") {
+    return background.id === "custom-background" ? "custom" : "library";
+  }
+  return background.kind;
+}
+
+function failureReason(code: ErrorCode): FailureReason {
+  return code.toLowerCase() as FailureReason;
+}
+
 export function BackgroundStudio() {
   const [state, dispatch] = useReducer(reducer, INITIAL);
   const [mode, setMode] = useState<Mode>("single");
@@ -311,7 +331,7 @@ export function BackgroundStudio() {
   );
 
   const runSingle = useCallback(
-    async (source: Blob, name: string) => {
+    async (source: Blob, name: string, inputSource: UploadSource, countUpload = true) => {
       controllerRef.current?.abort();
       const controller = new AbortController();
       controllerRef.current = controller;
@@ -319,6 +339,14 @@ export function BackgroundStudio() {
       compositeIdRef.current += 1;
       releaseSingle();
       dispatch({ type: "validating", name, blob: source });
+      if (countUpload) {
+        trackEvent("upload_started", {
+          input_source: inputSource,
+          mode: "single",
+          item_count_bucket: "1",
+        });
+      }
+      let processingStarted = false;
       try {
         const prepared = await prepareImage(source);
         if (taskId !== taskIdRef.current) return;
@@ -328,6 +356,8 @@ export function BackgroundStudio() {
           name,
           blob: source,
         });
+        processingStarted = true;
+        trackEvent("processing_started", { mode: "single" });
         const startedAt = performance.now();
         const { blob: cutoutBlob } = await removeBg(
           prepared.blob,
@@ -355,14 +385,24 @@ export function BackgroundStudio() {
         };
         cutoutRef.current = cutout;
         dispatch({ type: "done", cutout });
+        trackEvent("processing_completed", {
+          mode: "single",
+          duration_bucket: durationBucket(cutout.elapsedMs),
+          downsampled: cutout.downsampled,
+        });
         const preselected = selectedRef.current;
         if (preselected && preselected.kind !== "transparent") {
           void applyComposite(cutout, preselected);
         }
       } catch (error) {
         if (taskId !== taskIdRef.current) return;
+        const code = errorCode(error);
         console.error("[switchbg] processing failed:", error);
-        dispatch({ type: "failed", code: errorCode(error) });
+        dispatch({ type: "failed", code });
+        trackEvent(processingStarted ? "processing_failed" : "image_validation_failed", {
+          mode: "single",
+          reason: failureReason(code),
+        });
       }
     },
     [applyComposite, releaseSingle, trackSingle],
@@ -373,6 +413,7 @@ export function BackgroundStudio() {
     taskIdRef.current += 1;
     compositeIdRef.current += 1;
     dispatch({ type: "failed", code: "CANCELLED" });
+    trackEvent("processing_failed", { mode: "single", reason: "cancelled" });
   }, []);
 
   const drainBatch = useCallback(async () => {
@@ -400,6 +441,8 @@ export function BackgroundStudio() {
         const controller = new AbortController();
         controllerRef.current = controller;
         const startedAt = performance.now();
+        let processingStarted = false;
+        let processingStartedAt = 0;
         try {
           const prepared = await prepareImage(source);
           if (batchStopRef.current) {
@@ -427,6 +470,9 @@ export function BackgroundStudio() {
                 : candidate,
             ),
           );
+          processingStarted = true;
+          processingStartedAt = performance.now();
+          trackEvent("processing_started", { mode: "batch" });
           const { blob } = await removeBg(
             prepared.blob,
             (progress) =>
@@ -465,6 +511,11 @@ export function BackgroundStudio() {
                 : candidate,
             ),
           );
+          trackEvent("processing_completed", {
+            mode: "batch",
+            duration_bucket: durationBucket(performance.now() - processingStartedAt),
+            downsampled: prepared.downsampled,
+          });
         } catch (error) {
           if (batchStopRef.current) {
             updateBatch((items) =>
@@ -476,14 +527,19 @@ export function BackgroundStudio() {
             );
             break;
           }
+          const code = errorCode(error);
           console.error("[switchbg] batch item failed:", error);
           updateBatch((items) =>
             items.map((candidate) =>
               candidate.id === item.id
-                ? { ...candidate, status: "error", progress: null, error: errorCode(error) }
+                ? { ...candidate, status: "error", progress: null, error: code }
                 : candidate,
             ),
           );
+          trackEvent(processingStarted ? "processing_failed" : "image_validation_failed", {
+            mode: "batch",
+            reason: failureReason(code),
+          });
         }
       }
     } finally {
@@ -493,11 +549,20 @@ export function BackgroundStudio() {
       setBatchPaused(
         batchStopRef.current && batchItemsRef.current.some((item) => item.status === "queued"),
       );
+      const completedItems = batchItemsRef.current;
+      if (completedItems.length > 0 && !completedItems.some((item) => item.status === "queued")) {
+        const completedCount = completedItems.filter((item) => item.status === "done").length;
+        trackEvent("batch_completed", {
+          item_count_bucket: countBucket(completedItems.length),
+          success_count_bucket: countBucket(completedCount),
+          failed: completedCount !== completedItems.length,
+        });
+      }
     }
   }, [revokeUrl, trackBatch, updateBatch]);
 
   const addToBatch = useCallback(
-    (sources: InputSource[]) => {
+    (sources: InputSource[], inputSource: UploadSource) => {
       controllerRef.current?.abort();
       taskIdRef.current += 1;
       compositeIdRef.current += 1;
@@ -522,18 +587,25 @@ export function BackgroundStudio() {
       modeRef.current = "batch";
       setMode("batch");
       updateBatch((items) => [...items, ...additions]);
+      const itemCount = countBucket(sources.length);
+      trackEvent("upload_started", {
+        input_source: inputSource,
+        mode: "batch",
+        item_count_bucket: itemCount,
+      });
+      trackEvent("batch_started", { item_count_bucket: itemCount });
       queueMicrotask(() => void drainBatch());
     },
     [drainBatch, releaseSingle, trackBatch, updateBatch],
   );
 
   const acceptSources = useCallback(
-    (sources: InputSource[]) => {
+    (sources: InputSource[], inputSource: UploadSource) => {
       if (!sources.length) return;
       if (modeRef.current === "batch" || sources.length > 1) {
-        addToBatch(sources);
+        addToBatch(sources, inputSource);
       } else {
-        void runSingle(sources[0].blob, sources[0].name);
+        void runSingle(sources[0].blob, sources[0].name, inputSource);
       }
     },
     [addToBatch, runSingle],
@@ -598,7 +670,12 @@ export function BackgroundStudio() {
     setBatchExporting(item.id);
     try {
       if (!background || background.kind === "transparent") {
-        await saveBlob(item.outputBlob, resultFilename(item.name, "png"));
+        downloadBlob(item.outputBlob, resultFilename(item.name, "png"));
+        trackEvent("download_completed", {
+          mode: "batch",
+          format: "png",
+          background_type: "transparent",
+        });
         return;
       }
       const bitmap = await createImageBitmap(item.outputBlob);
@@ -609,7 +686,12 @@ export function BackgroundStudio() {
           { width: item.width, height: item.height },
           0.95,
         );
-        await saveBlob(blob, resultFilename(item.name, "jpg"));
+        downloadBlob(blob, resultFilename(item.name, "jpg"));
+        trackEvent("download_completed", {
+          mode: "batch",
+          format: "jpeg",
+          background_type: backgroundType(background),
+        });
       } finally {
         bitmap.close();
       }
@@ -624,6 +706,7 @@ export function BackgroundStudio() {
     (background: BackgroundOption) => {
       selectedRef.current = background;
       dispatch({ type: "select", bg: background });
+      trackEvent("background_selected", { background_type: backgroundType(background) });
       if (modeRef.current === "single" && cutoutRef.current) {
         void applyComposite(cutoutRef.current, background);
       }
@@ -641,9 +724,13 @@ export function BackgroundStudio() {
     if (!cutout) return;
     const selected = selectedRef.current;
     if (!selected || selected.kind === "transparent") {
-      if (await saveBlob(cutout.blob, resultFilename(cutout.fileName, "png"))) {
-        dispatch({ type: "downloaded" });
-      }
+      downloadBlob(cutout.blob, resultFilename(cutout.fileName, "png"));
+      dispatch({ type: "downloaded" });
+      trackEvent("download_completed", {
+        mode: "single",
+        format: "png",
+        background_type: "transparent",
+      });
       return;
     }
     dispatch({ type: "exporting", on: true });
@@ -654,8 +741,13 @@ export function BackgroundStudio() {
         { width: cutout.width, height: cutout.height },
         0.95,
       );
-      const saved = await saveBlob(blob, resultFilename(cutout.fileName, "jpg"));
-      if (saved) dispatch({ type: "downloaded" });
+      downloadBlob(blob, resultFilename(cutout.fileName, "jpg"));
+      dispatch({ type: "downloaded" });
+      trackEvent("download_completed", {
+        mode: "single",
+        format: "jpeg",
+        background_type: backgroundType(selected),
+      });
     } catch (error) {
       console.error("[switchbg] export failed:", error);
     } finally {
@@ -669,9 +761,10 @@ export function BackgroundStudio() {
         const response = await fetch(src);
         if (!response.ok) throw new Error(`HTTP ${response.status}`);
         const blob = await response.blob();
-        acceptSources([{ blob, name: `sample-${label.toLowerCase()}.jpg` }]);
+        acceptSources([{ blob, name: `sample-${label.toLowerCase()}.jpg` }], "sample");
       } catch {
         dispatch({ type: "invalid", code: "FETCH_URL" });
+        trackEvent("image_validation_failed", { mode: "single", reason: "fetch_url" });
       }
     },
     [acceptSources],
@@ -684,7 +777,7 @@ export function BackgroundStudio() {
         const file = item.getAsFile();
         if (!file) return;
         event.preventDefault();
-        acceptSources([{ blob: file, name: file.name || "pasted-image.png" }]);
+        acceptSources([{ blob: file, name: file.name || "pasted-image.png" }], "paste");
         return;
       }
     };
@@ -694,7 +787,7 @@ export function BackgroundStudio() {
 
   const onInputChange = (event: ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(event.target.files ?? []);
-    acceptSources(files.map((file) => ({ blob: file, name: file.name })));
+    acceptSources(files.map((file) => ({ blob: file, name: file.name })), "file");
     event.target.value = "";
   };
   const onDragEnter = (event: DragEvent) => {
@@ -715,8 +808,25 @@ export function BackgroundStudio() {
     dragDepth.current = 0;
     setDragging(false);
     const files = Array.from(event.dataTransfer.files ?? []);
-    acceptSources(files.map((file) => ({ blob: file, name: file.name })));
+    acceptSources(files.map((file) => ({ blob: file, name: file.name })), "drop");
   };
+
+  const onCompare = useCallback((view: "result" | "original") => {
+    dispatch({ type: "compare", view });
+    trackEvent("comparison_used", { view });
+  }, []);
+
+  const onTransparentDownload = useCallback(() => {
+    const cutout = cutoutRef.current;
+    if (!cutout) return;
+    downloadBlob(cutout.blob, resultFilename(cutout.fileName, "png"));
+    dispatch({ type: "downloaded" });
+    trackEvent("download_completed", {
+      mode: "single",
+      format: "png",
+      background_type: "transparent",
+    });
+  }, []);
 
   const ready = state.phase === "ready" && state.cutout;
   const transparentView = ready && (!state.selected || state.selected.kind === "transparent");
@@ -775,7 +885,7 @@ export function BackgroundStudio() {
                   <p className="mt-2 max-w-sm text-sm text-muted-foreground">{ERROR_COPY[state.error].hint}</p>
                   <div className="mt-7 flex flex-wrap justify-center gap-3">
                     {state.retryBlob && (
-                      <Button onClick={() => void runSingle(state.retryBlob!, state.originalName)}>
+                      <Button onClick={() => void runSingle(state.retryBlob!, state.originalName, "file", false)}>
                         <RotateCcw className="size-4" /> Retry
                       </Button>
                     )}
@@ -790,12 +900,10 @@ export function BackgroundStudio() {
                   <ReadyPanel
                     state={{ ...state, cutout: state.cutout }}
                     transparentView={Boolean(transparentView)}
-                    onCompare={(view) => dispatch({ type: "compare", view })}
+                    onCompare={onCompare}
                     onReset={() => resetSingle(true)}
                     onDownload={() => void onDownload()}
-                    onTransparentDownload={() =>
-                      void saveBlob(state.cutout!.blob, resultFilename(state.cutout!.fileName, "png"))
-                    }
+                    onTransparentDownload={onTransparentDownload}
                   />
                   <aside className="border-t border-border pt-6 lg:border-t-0 lg:border-l lg:pt-0 lg:pl-8">
                     <Gallery compact selected={state.selected} onSelect={onSelect} onUpload={onUploadBackground} />

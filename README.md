@@ -21,6 +21,19 @@ npm run build && npm run start
 
 模型升级或缺失时:`npm run prepare:models`。背景图源更新:`node scripts/prepare-backgrounds.mjs`。
 
+## GA4 埋点
+
+在部署平台配置 `NEXT_PUBLIC_GA_MEASUREMENT_ID=G-XXXXXXXXXX` 后，站点才会显示分析授权横幅并启用 GA4。用户同意前不会加载 Google 脚本；拒绝后不会发送分析事件。事件只包含预定义的功能类别和结果，不包含图片、文件名、Blob URL 或原始错误信息。
+
+GA4 后台还需要完成以下设置：
+
+- 将 `download_completed` 标记为关键事件。
+- 用 `upload_started → processing_completed → background_selected → download_completed` 建立核心漏斗。
+- 为需要出现在报告中的自定义参数创建事件级自定义维度。
+- 将事件数据保留期限设为可用的最短期限，并保持 Google Signals、广告个性化和 Google Ads 关联关闭。
+
+本地不配置该环境变量时，分析代码和授权界面均保持关闭。
+
 ## 许可与使用范围
 
 - 当前实现使用 `@imgly/background-removal@1.7.0`（AGPL-3.0）及其 `isnet_quint8` 模型；不是 BRIA RMBG-1.4。
