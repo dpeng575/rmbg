@@ -28,8 +28,8 @@ const SHOWCASE = [
   {
     id: "pets",
     label: "Pets",
-    before: "/samples/pet.jpg",
-    after: "/samples/pet-cutout.png",
+    before: "/samples/pet-studio.jpg",
+    after: "/samples/pet-studio-cutout.png",
     alt: "Pet photo before and after background removal",
     width: 960,
     height: 810,

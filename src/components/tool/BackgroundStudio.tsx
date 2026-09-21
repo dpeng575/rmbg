@@ -78,6 +78,13 @@ type State = {
   downloaded: boolean;
 };
 
+type ConfirmRequest = {
+  title: string;
+  description: string;
+  confirmLabel: string;
+  onConfirm: () => void;
+};
+
 const INITIAL: State = {
   phase: "idle",
   progress: null,
@@ -180,7 +187,7 @@ type InputSource = { blob: Blob; name: string };
 const SAMPLES = [
   { src: "/samples/portrait.jpg", label: "Portrait" },
   { src: "/samples/product.jpg", label: "Product" },
-  { src: "/samples/pet.jpg", label: "Pet" },
+  { src: "/samples/pet-studio.jpg", label: "Pet" },
 ] as const;
 
 function errorCode(error: unknown): ErrorCode {
@@ -208,6 +215,7 @@ export function BackgroundStudio() {
   const [batchBusy, setBatchBusy] = useState(false);
   const [batchPaused, setBatchPaused] = useState(false);
   const [batchExporting, setBatchExporting] = useState<number | null>(null);
+  const [confirmRequest, setConfirmRequest] = useState<ConfirmRequest | null>(null);
   const batchItemsRef = useRef<BatchItem[]>([]);
   const batchRunningRef = useRef(false);
   const batchStopRef = useRef(false);
@@ -611,28 +619,34 @@ export function BackgroundStudio() {
     [addToBatch, runSingle],
   );
 
-  const resetSingle = useCallback(
-    (ask = true) => {
-      if (ask && state.phase !== "idle" && !window.confirm("Clear this photo and its result?")) return;
+  const clearSingle = useCallback(() => {
       controllerRef.current?.abort();
       taskIdRef.current += 1;
       compositeIdRef.current += 1;
       releaseSingle();
       releaseCustomBackground();
       dispatch({ type: "reset" });
+  }, [releaseCustomBackground, releaseSingle]);
+  const resetSingle = useCallback(
+    (ask = true) => {
+      if (ask && state.phase !== "idle") {
+        setConfirmRequest({
+          title: "Start over with a new photo?",
+          description: "Your current photo and background result will be cleared.",
+          confirmLabel: "Clear photo",
+          onConfirm: clearSingle,
+        });
+        return;
+      }
+      clearSingle();
     },
-    [releaseCustomBackground, releaseSingle, state.phase],
+    [clearSingle, state.phase],
   );
   const cancelBatch = useCallback(() => {
     batchStopRef.current = true;
     controllerRef.current?.abort();
   }, []);
-  const clearBatch = useCallback(
-    (exit: boolean) => {
-      if (
-        batchItemsRef.current.length > 0 &&
-        !window.confirm(exit ? "Exit batch mode and clear the queue?" : "Clear the entire batch queue?")
-      ) return;
+  const clearBatchNow = useCallback((exit: boolean) => {
       cancelBatch();
       releaseBatch();
       setBatchPaused(false);
@@ -641,8 +655,23 @@ export function BackgroundStudio() {
         setMode("single");
         dispatch({ type: "reset" });
       }
+  }, [cancelBatch, releaseBatch]);
+  const clearBatch = useCallback(
+    (exit: boolean) => {
+      if (batchItemsRef.current.length > 0) {
+        setConfirmRequest({
+          title: exit ? "Exit batch mode?" : "Clear the batch queue?",
+          description: exit
+            ? "The queued photos and their results will be removed."
+            : "All photos in the queue and their results will be removed.",
+          confirmLabel: exit ? "Exit batch mode" : "Clear queue",
+          onConfirm: () => clearBatchNow(exit),
+        });
+        return;
+      }
+      clearBatchNow(exit);
     },
-    [cancelBatch, releaseBatch],
+    [clearBatchNow],
   );
   const removeBatchItem = useCallback(
     (id: number) => {
@@ -920,7 +949,58 @@ export function BackgroundStudio() {
           {state.phase !== "ready" && <Gallery selected={state.selected} onSelect={onSelect} onUpload={onUploadBackground} />}
         </div>
       </div>
+      <ConfirmDialog request={confirmRequest} onClose={() => setConfirmRequest(null)} />
     </section>
+  );
+}
+
+function ConfirmDialog({ request, onClose }: { request: ConfirmRequest | null; onClose: () => void }) {
+  const cancelRef = useRef<HTMLButtonElement>(null);
+
+  useEffect(() => {
+    if (!request) return;
+    cancelRef.current?.focus();
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape") onClose();
+    };
+    document.addEventListener("keydown", onKeyDown);
+    return () => document.removeEventListener("keydown", onKeyDown);
+  }, [onClose, request]);
+
+  if (!request) return null;
+  return (
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center bg-foreground/35 px-4 backdrop-blur-[2px]"
+      role="presentation"
+      onMouseDown={(event) => {
+        if (event.target === event.currentTarget) onClose();
+      }}
+    >
+      <div
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="confirm-dialog-title"
+        aria-describedby="confirm-dialog-description"
+        className="w-full max-w-md overflow-hidden rounded-2xl border border-border bg-card shadow-2xl"
+      >
+        <div className="flex items-start gap-4 px-6 pt-6">
+          <span className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-destructive/10 text-destructive">
+            <AlertCircle className="size-5" strokeWidth={2} />
+          </span>
+          <div className="min-w-0">
+            <h2 id="confirm-dialog-title" className="text-base font-semibold text-card-foreground">{request.title}</h2>
+            <p id="confirm-dialog-description" className="mt-1.5 text-sm leading-6 text-muted-foreground">{request.description}</p>
+          </div>
+          <Button variant="ghost" size="icon-xs" className="-mr-2 -mt-1 text-muted-foreground" onClick={onClose} aria-label="Close dialog">
+            <X />
+          </Button>
+        </div>
+        <div className="mt-6 flex justify-end gap-2 border-t border-border bg-muted/35 px-6 py-4">
+          <Button ref={cancelRef} variant="outline" onClick={onClose}>Cancel</Button>
+          <Button variant="destructive" onClick={() => { onClose(); request.onConfirm(); }}>{request.confirmLabel}</Button>
+        </div>
+      </div>
+    </div>
   );
 }
 
