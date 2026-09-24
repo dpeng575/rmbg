@@ -74,7 +74,11 @@ console.log("reset to idle OK");
 const selfHosted = modelReqs.filter((u) => u.includes("/models/")).length;
 const external = modelReqs.filter((u) => u.includes("staticimgly")).length;
 console.log(`model requests: ${selfHosted} self-hosted, ${external} external CDN`);
-if (external > 0) throw new Error("仍有请求打到外部 CDN");
+// 默认走官方 CDN;SELFHOST=1(NEXT_PUBLIC_MODEL_BASE_URL=/models/)验证自托管回退时才要求零外网请求
+if (process.env.SELFHOST === "1" && external > 0)
+  throw new Error("自托管模式下仍有请求打到外部 CDN");
+if (selfHosted === 0 && external === 0)
+  throw new Error("没有观察到任何模型请求");
 
 console.log(errors.length ? "console errors:\n" + errors.join("\n") : "no console errors");
 await browser.close();

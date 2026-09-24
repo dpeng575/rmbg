@@ -50,6 +50,19 @@ function download(url, dest) {
 }
 
 async function main() {
+  // postinstall 传 --if-selfhost:未设置 NEXT_PUBLIC_MODEL_BASE_URL 时
+  // 走官方 CDN,模型不进部署包,直接跳过(自托管回退再手动执行即可)。
+  if (
+    process.argv.includes("--if-selfhost") &&
+    !process.env.NEXT_PUBLIC_MODEL_BASE_URL?.trim()
+  ) {
+    console.log(
+      "未设置 NEXT_PUBLIC_MODEL_BASE_URL,使用官方 CDN,跳过模型下载。" +
+        "自托管回退请运行: npm run prepare:models",
+    );
+    return;
+  }
+
   mkdirSync(OUT_DIR, { recursive: true });
 
   // 拉取官方清单(临时文件放系统目录,不进 public 避免被静态服务)
