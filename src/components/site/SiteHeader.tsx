@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { Replace } from "lucide-react";
+import Image from "next/image";
 
 const NAV = [
   { label: "How it works", href: "/#how" },
@@ -12,13 +12,15 @@ export function SiteHeader() {
   return (
     <header className="sticky top-0 z-40 border-b border-border bg-background/85 backdrop-blur-md">
       <div className="mx-auto flex h-16 max-w-6xl items-center justify-between px-4 sm:px-6">
-        <Link href="/" className="flex items-center gap-2.5" aria-label="SwitchBG home">
-          <span className="flex size-8 items-center justify-center rounded-lg bg-primary text-primary-foreground shadow-sm">
-            <Replace className="size-4.5" strokeWidth={2} />
-          </span>
-          <span className="text-lg font-extrabold tracking-tight">
-            Switch<span className="text-primary">BG</span>
-          </span>
+        <Link href="/" className="flex items-center" aria-label="SwitchBG home">
+          <Image
+            src="/logo.png"
+            alt="SwitchBG"
+            width={474}
+            height={160}
+            priority
+            className="h-8 w-auto"
+          />
         </Link>
 
         <nav className="hidden items-center gap-7 text-sm text-muted-foreground md:flex" aria-label="Main">
