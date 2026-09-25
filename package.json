@@ -4,7 +4,7 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
-    "build": "next build",
+    "build": "node scripts/validate-models.mjs && next build",
     "start": "next start",
     "lint": "eslint",
     "test:e2e:desktop": "node scripts/e2e.mjs",

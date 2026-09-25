@@ -98,7 +98,7 @@ const softwareAppJsonLd = {
   featureList: [
     "Change photo backgrounds",
     "Transparent PNG export",
-    "HD output at original resolution",
+    "HD output up to 4096px on the long edge",
     "No signup",
     "No watermark",
   ],

@@ -65,9 +65,9 @@ await page.click('button:has-text("Transparent PNG")');
 const d2 = await png;
 console.log("PNG download:", d2.suggestedFilename());
 
-// 重置回状态①
-page.once("dialog", (dialog) => dialog.accept());
+// 重置回状态①(重置走自定义 ConfirmDialog,确认按钮为 "Clear photo")
 await page.click('button:has-text("Start over")');
+await page.click('button:has-text("Clear photo")');
 await page.waitForSelector('button:has-text("Upload photos")');
 console.log("reset to idle OK");
 

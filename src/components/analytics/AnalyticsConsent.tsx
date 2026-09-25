@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useEffect, useSyncExternalStore } from "react";
 import { Button } from "@/components/ui/button";
 import {
   ANALYTICS_SETTINGS_EVENT,
@@ -14,17 +14,43 @@ import {
   type AnalyticsConsent as Consent,
 } from "@/lib/analytics";
 
+/**
+ * 横幅可见性作为外部存储(readAnalyticsConsent 的 localStorage 值 +
+ * 「打开设置」事件标志),用 useSyncExternalStore 订阅:
+ * - 服务端快照恒为 undefined(不渲染),客户端快照稳定,无 hydration 错配;
+ * - 代替「effect 里同步 setState 回读 localStorage」的写法
+ *   (react-hooks/set-state-in-effect)。
+ */
+type BannerState = Consent | null | undefined;
+
+let settingsRequested = false;
+const listeners = new Set<() => void>();
+
+if (typeof window !== "undefined") {
+  window.addEventListener(ANALYTICS_SETTINGS_EVENT, () => {
+    settingsRequested = true;
+    for (const notify of listeners) notify();
+  });
+}
+
+function subscribe(notify: () => void): () => void {
+  listeners.add(notify);
+  return () => listeners.delete(notify);
+}
+
+function getSnapshot(): BannerState {
+  if (!analyticsIsConfigured()) return undefined;
+  if (settingsRequested) return null;
+  return readAnalyticsConsent();
+}
+
+function getServerSnapshot(): BannerState {
+  return undefined;
+}
+
 export function AnalyticsConsent() {
   const pathname = usePathname();
-  const [consent, setConsent] = useState<Consent | null | undefined>(undefined);
-
-  useEffect(() => {
-    if (!analyticsIsConfigured()) return;
-    setConsent(readAnalyticsConsent());
-    const openSettings = () => setConsent(null);
-    window.addEventListener(ANALYTICS_SETTINGS_EVENT, openSettings);
-    return () => window.removeEventListener(ANALYTICS_SETTINGS_EVENT, openSettings);
-  }, []);
+  const consent = useSyncExternalStore(subscribe, getSnapshot, getServerSnapshot);
 
   useEffect(() => {
     if (consent !== "accepted") return;
@@ -39,7 +65,8 @@ export function AnalyticsConsent() {
 
   const choose = (next: Consent) => {
     saveAnalyticsConsent(next);
-    setConsent(next);
+    settingsRequested = false;
+    for (const notify of listeners) notify();
   };
 
   return (

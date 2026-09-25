@@ -22,7 +22,7 @@ export const FAQS: { q: string; a: string }[] = [
   },
   {
     q: "Can I change bg for free without a watermark?",
-    a: "Yes. SwitchBG never adds watermarks. Your download is a clean, full-resolution image, completely free.",
+    a: "Yes. SwitchBG never adds watermarks. Your download is a clean image at up to 4096px on the long edge, completely free.",
   },
   {
     q: "Do I need an app to change background photo?",
@@ -38,6 +38,6 @@ export const FAQS: { q: string; a: string }[] = [
 export const WHY_BULLETS: string[] = [
   "Free and unlimited — no credits, no daily cap",
   "No signup, no email — just upload and go",
-  "No watermark, HD output — your image keeps its original resolution",
+  "No watermark, HD output — up to 4096px on the long edge",
   "Your image file is processed in your browser — SwitchBG does not upload it",
 ];
