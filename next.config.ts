@@ -59,7 +59,8 @@ const nextConfig: NextConfig = {
               "font-src 'self'",
               // GA 上报 + 模型资源(自托管为同源 'self',CDN 模式为 staticimgly)
               // blob::ORT fetch 已 import 的 blob 模块/编译 WASM
-              "connect-src 'self' blob: https://staticimgly.com https://*.google-analytics.com https://*.analytics.google.com https://www.googletagmanager.com",
+              // www.google.com:GA4 的 /g/collect 上报端点之一,不带 google-analytics.com 后缀
+              "connect-src 'self' blob: https://staticimgly.com https://*.google-analytics.com https://*.analytics.google.com https://www.googletagmanager.com https://www.google.com",
               "worker-src 'self' blob:",
               "object-src 'none'",
               "base-uri 'self'",
