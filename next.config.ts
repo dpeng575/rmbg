@@ -35,7 +35,10 @@ const nextConfig: NextConfig = {
         headers: [
           { key: "Cross-Origin-Opener-Policy", value: "same-origin" },
           { key: "Cross-Origin-Embedder-Policy", value: "require-corp" },
-          { key: "Strict-Transport-Security", value: "max-age=63072000; includeSubDomains" },
+          // HSTS 分阶段:首发用 5 分钟无 includeSubDomains,全站(含所有子域)
+          // 稳定走 HTTPS 一到两周后再调 max-age=63072000; includeSubDomains。
+          // HSTS 被浏览器记住后无法服务端回滚,首发就下 2 年风险过高。
+          { key: "Strict-Transport-Security", value: "max-age=300" },
           { key: "X-Content-Type-Options", value: "nosniff" },
           { key: "Referrer-Policy", value: "strict-origin-when-cross-origin" },
           { key: "X-Frame-Options", value: "DENY" },

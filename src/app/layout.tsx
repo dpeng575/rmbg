@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import { Manrope } from "next/font/google";
 import { AnalyticsConsent } from "@/components/analytics/AnalyticsConsent";
+import { SITE_URL } from "@/lib/site-config";
 import "./globals.css";
 
 const manrope = Manrope({
@@ -9,7 +10,7 @@ const manrope = Manrope({
 });
 
 export const metadata: Metadata = {
-  metadataBase: new URL("https://switchbg.com"),
+  metadataBase: new URL(SITE_URL),
   title: "Photo Background Changer – Free Online Tool | SwitchBG",
   description:
     "Change the background of any photo in seconds. Free, no signup, no watermark, HD quality. Upload a photo, choose a new background, and download instantly.",
