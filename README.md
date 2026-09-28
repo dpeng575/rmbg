@@ -7,19 +7,19 @@ Photo Background Changer — 上传照片，AI 在浏览器内抠图并替换背
 - **Next.js App Router + Tailwind + shadcn/ui**(组件在 `src/components/ui/`,经 registry 手动接入)
 - **SEO 服务端渲染**:TDK / H1 / 正文 4 个 H2 / 7 条 FAQ 全部静态 HTML,附 `SoftwareApplication` + `FAQPage` JSON-LD;只有工具区(`BackgroundStudio`)是 `'use client'` 岛
 - **状态机**:① idle(上传 + 背景图库预选)→ processing → ready(② 未选背景:棋盘格抠图 + 引导;③ 已选背景:实时合成 + 原图/结果切换 + Download HD)
-- **抠图**:`@imgly/background-removal`,模型自托管于 `public/models/`(COOP/COEP 跨域隔离 → WASM 多线程)
+- **抠图**:`@imgly/background-removal`,模型默认从 imgly 官方 CDN 加载(部署包不含模型);设置 `NEXT_PUBLIC_MODEL_BASE_URL=/models/` 可切换自托管回退(COOP/COEP 跨域隔离 → WASM 多线程)
 - **合成**:[composite.ts](src/lib/composite.ts) canvas 引擎 —— 预览降采样(≤1400px 即时切换),下载时全分辨率导出(HD JPEG q95;透明走 PNG)
 - **背景图库**:纯色/渐变 CSS 即时渲染 + 18 张 2400w 照片([prepare-backgrounds.mjs](scripts/prepare-backgrounds.mjs) 下载,已入仓)
 
 ## 开发
 
 ```bash
-npm install        # postinstall 自动下载模型与运行时资源(约 76MB)
+npm install        # 默认走官方 CDN,不下载模型
 npm run dev        # http://localhost:3000
 npm run build && npm run start
 ```
 
-模型升级或缺失时:`npm run prepare:models`。背景图源更新:`node scripts/prepare-backgrounds.mjs`。
+模型资源:默认从 imgly 官方 CDN 加载,零配置。自托管回退(imgly CDN 不可用或想省第三方依赖时):`npm run prepare:models` 下载约 76MB 到 `public/models/`(不入仓),部署时设置 `NEXT_PUBLIC_MODEL_BASE_URL=/models/`;postinstall 只在该环境变量已设置时才自动下载。背景图源更新:`node scripts/prepare-backgrounds.mjs`。
 
 ## GA4 埋点
 
@@ -43,7 +43,9 @@ GA4 后台还需要完成以下设置：
 ## 验证脚本
 
 ```bash
-node scripts/e2e.mjs          # 端到端:上传→抠图→选背景→下载 HD/透明 PNG→重置;断言隔离与自托管
+node scripts/e2e.mjs          # 端到端:上传→抠图→选背景→下载 HD/透明 PNG→重置;断言跨域隔离
 node scripts/e2e-mobile.mjs   # 移动端 390px 全流程 + 格式错误路径
 node scripts/screenshot.mjs   # 桌面端全页截图(驱动系统 Chrome)
 ```
+
+验证自托管回退时:`NEXT_PUBLIC_MODEL_BASE_URL=/models/` 启动 dev,再以 `SELFHOST=1` 运行 e2e,脚本会断言零外网模型请求。

@@ -1,0 +1,22 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      # 顺序必须是 build → lint → tsc:tsc 依赖的 Next 生成类型
+      # (LayoutProps 等全局类型)只在 next build 后写入 .next/types
+      - run: npm run build
+      - run: npm run lint
+      - run: npx tsc --noEmit

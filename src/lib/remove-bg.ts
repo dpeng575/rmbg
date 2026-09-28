@@ -63,6 +63,23 @@ async function withOrtNoiseSilenced<T>(fn: () => Promise<T>): Promise<T> {
 }
 
 /**
+ * 模型资源基址:默认 undefined → 库使用自带官方 CDN 地址,部署包不含
+ * 76MB 模型,出口带宽成本为零。设置 NEXT_PUBLIC_MODEL_BASE_URL(如
+ * "/models/" 或绝对 URL)即切换到自托管回退 —— 模型需先经
+ * npm run prepare:models 下载到 public/models/。imgly CDN 无 SLA、
+ * 版本目录可能被清理,这是保留自托管路径的原因。库内部用
+ * new URL(name, publicPath) 拼地址,相对路径必须补全为绝对 URL。
+ */
+function resolveModelPublicPath(): string | undefined {
+  const raw = process.env.NEXT_PUBLIC_MODEL_BASE_URL?.trim();
+  if (!raw) return undefined;
+  const base = raw.endsWith("/") ? raw : `${raw}/`;
+  return /^https?:\/\//.test(base)
+    ? base
+    : `${window.location.origin}${base}`;
+}
+
+/**
  * 抠图主入口。source 直接传 File/Blob,输出为全分辨率透明 PNG Blob
  * (mask 会被缩放回原图分辨率)。同时返回各阶段耗时拆分。
  */
@@ -92,9 +109,7 @@ export async function removeBg(
     removeBackground(source, {
       device: "gpu", // 内部检测 WebGPU,不支持自动回退 wasm
       model: "isnet_quint8", // ~42MB,首载友好;输出质量已足够
-      // 自托管模型与 ORT 运行时(见 scripts/prepare-models.mjs)。
-      // 库内部用 new URL(name, publicPath) 拼地址,必须是绝对 URL
-      publicPath: `${window.location.origin}/models/`,
+      publicPath: resolveModelPublicPath(),
       fetchArgs: signal ? { signal } : undefined,
       output: { format: "image/png", quality: 1 },
       progress: (key: string, current: number, total: number) => {
