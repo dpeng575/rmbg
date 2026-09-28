@@ -48,9 +48,11 @@ const nextConfig: NextConfig = {
               "default-src 'self'",
               // 'unsafe-inline':Next 无 nonce 的内联引导脚本;GA 经 googletagmanager 注入
               // 'wasm-unsafe-eval' + blob::ORT 编译 WASM,且 JSEP 后端以 import(blob:.mjs) 加载
-              // staticimgly.com:官方 CDN 模式下 ORT 的 .mjs 以动态 import 加载
-              // dev 追加 'unsafe-eval' 供 React Refresh
-              `script-src 'self' 'unsafe-inline' 'wasm-unsafe-eval' blob: https://staticimgly.com https://www.googletagmanager.com${process.env.NODE_ENV === "development" ? " 'unsafe-eval'" : ""}`,
+              // 'unsafe-eval':ORT JSEP/WebGPU 路径运行时会 new Function 求值
+              // (EvalError: Evaluating a string as JavaScript),wasm-unsafe-eval
+              // 不覆盖它。代价是放松了 CSP,但功能优先;staticimgly.com:官方
+              // CDN 模式下 ORT 的 .mjs 以动态 import 加载
+              "script-src 'self' 'unsafe-inline' 'unsafe-eval' 'wasm-unsafe-eval' blob: https://staticimgly.com https://www.googletagmanager.com",
               "style-src 'self' 'unsafe-inline'",
               // blob:/data::上传预览与合成结果走 object URL
               "img-src 'self' data: blob: https://www.google-analytics.com https://*.google-analytics.com https://www.googletagmanager.com",
