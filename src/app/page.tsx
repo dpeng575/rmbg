@@ -7,6 +7,7 @@ import {
   Download,
   Focus,
   Infinity as InfinityIcon,
+  Lock,
   LogIn,
   MoveRight,
   Palette,
@@ -32,7 +33,7 @@ const WHY_ICONS = [InfinityIcon, LogIn, BadgeCheck, ShieldCheck];
 /** Hero 特性 pill:文案与原「Free · No signup · ...」逐字对应,只是加视觉容器 */
 const HERO_FEATURES = [
   { icon: Sparkles, label: "Free" },
-  { icon: Check, label: "No signup" },
+  { icon: Lock, label: "No signup" },
   { icon: Check, label: "No watermark" },
   { icon: ShieldCheck, label: "Your image is processed in your browser" },
 ];
@@ -172,15 +173,16 @@ export default function Home() {
               ))}
             </ul>
 
-            {/* Before / After 迷你视觉:参考 bgclear,首屏直接给出效果预期 */}
+            {/* Before / After 迷你视觉:参考 bgclear,首屏直接给出效果预期。
+                素材 720×750,按原始比例完整显示,不裁切 */}
             <div
               className="animate-rise mt-10 flex items-center justify-center gap-3 sm:gap-5"
               style={{ animationDelay: "240ms" }}
             >
-              <figure className="relative aspect-[4/3] w-32 overflow-hidden rounded-xl border border-border bg-secondary shadow-sm sm:w-44">
+              <figure className="relative aspect-[24/25] w-32 overflow-hidden rounded-xl border border-border bg-secondary shadow-sm sm:w-44">
                 <Image
-                  src="/samples/portrait.jpg"
-                  alt="Original portrait photo"
+                  src="/samples/car6-before.jpg"
+                  alt="Original car photo"
                   fill
                   sizes="176px"
                   className="object-cover"
@@ -196,12 +198,12 @@ export default function Home() {
                 <MoveRight className="size-4 sm:size-5" />
               </span>
               <figure
-                className="relative aspect-[4/3] w-32 overflow-hidden rounded-xl border border-border shadow-sm sm:w-44"
+                className="relative aspect-[24/25] w-32 overflow-hidden rounded-xl border border-border shadow-sm sm:w-44"
                 style={CHECKER_STYLE}
               >
                 <Image
-                  src="/samples/portrait-cutout.webp"
-                  alt="Portrait with its background removed"
+                  src="/samples/car6-after.webp"
+                  alt="Car with its background removed"
                   fill
                   sizes="176px"
                   className="object-cover"
