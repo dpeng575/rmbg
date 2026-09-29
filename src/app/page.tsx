@@ -42,16 +42,25 @@ const HOW_STEPS = [
     icon: Upload,
     label: "Upload a photo",
     detail: "Choose a JPG, PNG or WebP from your device, or try one of the sample photos.",
+    visual: "/samples/car6-before.jpg",
+    alt: "Original car photo",
+    checker: false,
   },
   {
     icon: Palette,
     label: "Choose the new background",
     detail: "Keep it transparent, pick a color or image, or upload a background of your own.",
+    visual: "/samples/car6-after.webp",
+    alt: "Car cut out from its background",
+    checker: true,
   },
   {
     icon: Download,
     label: "Check and download",
     detail: "Compare the original and result, then download a clean image with no watermark.",
+    visual: "/samples/car6-step3.jpg",
+    alt: "Car composited onto a new background, ready to download",
+    checker: false,
   },
 ];
 
@@ -222,43 +231,55 @@ export default function Home() {
         {/* —— 效果展示:分类示例 + 前后对比滑块 —— */}
         <QualityShowcase />
 
-        {/* —— 正文区块(服务端渲染,文案逐字) —— */}
+        {/* —— 使用说明:参考 remove.bg「Just picture it」,三步各配一张过程图(文案逐字) —— */}
         <section id="how" className="scroll-mt-20 border-y border-border py-16 sm:py-20">
-          <div className="mx-auto grid max-w-6xl gap-10 px-4 sm:px-6 lg:grid-cols-[0.78fr_1.22fr] lg:gap-16">
-            <div>
-              <h2 className="max-w-md text-2xl font-bold tracking-tight sm:text-3xl">
+          <div className="mx-auto max-w-6xl px-4 sm:px-6">
+            <div className="mx-auto max-w-2xl text-center">
+              <h2 className="text-2xl font-bold tracking-tight sm:text-3xl">
                 From photo to finished image in three steps
               </h2>
-              <p className="mt-4 max-w-md leading-relaxed text-muted-foreground">
+              <p className="mt-4 leading-relaxed text-muted-foreground">
                 No layers, masks or editing skills. SwitchBG guides you from the
                 first upload to a result you can use.
               </p>
+            </div>
+            <ol className="mt-12 grid gap-10 sm:grid-cols-3 sm:gap-6 lg:gap-10">
+              {HOW_STEPS.map((step, i) => (
+                <li key={step.label} className="text-center">
+                  <figure
+                    className="relative aspect-[24/25] overflow-hidden rounded-xl border border-border bg-secondary shadow-sm"
+                    style={step.checker ? CHECKER_STYLE : undefined}
+                  >
+                    <Image
+                      src={step.visual}
+                      alt={step.alt}
+                      fill
+                      sizes="(min-width: 640px) 33vw, 100vw"
+                      className="object-cover"
+                    />
+                    <span className="absolute left-3 top-3 rounded-full bg-primary px-2.5 py-1 text-xs font-bold text-primary-foreground shadow-sm">
+                      {`0${i + 1}`}
+                    </span>
+                  </figure>
+                  <h3 className="mt-5 inline-flex items-center gap-2 text-lg font-semibold">
+                    <step.icon className="size-4.5 text-primary" strokeWidth={1.75} aria-hidden />
+                    {step.label}
+                  </h3>
+                  <p className="mx-auto mt-2 max-w-xs text-sm leading-relaxed text-muted-foreground">
+                    {step.detail}
+                  </p>
+                </li>
+              ))}
+            </ol>
+            <div className="mt-12 text-center">
               <Link
                 href="/#tool"
-                className="mt-6 inline-flex items-center gap-2 text-sm font-semibold text-primary underline-offset-4 hover:underline"
+                className="inline-flex items-center gap-2 rounded-[8px] bg-accent px-5 py-3 text-sm font-semibold text-accent-foreground shadow-sm transition-transform duration-150 hover:scale-[1.03] active:scale-[0.98]"
               >
                 <Upload className="size-4" aria-hidden />
                 Choose a photo
               </Link>
             </div>
-            <ol className="divide-y divide-border border-y border-border">
-              {HOW_STEPS.map((step, i) => (
-                <li key={step.label} className="grid grid-cols-[2.5rem_1fr] gap-4 py-5 sm:grid-cols-[2.5rem_2.5rem_1fr] sm:items-start">
-                  <span className="pt-2 font-mono text-xs text-muted-foreground" aria-hidden>
-                    0{i + 1}
-                  </span>
-                  <span className="hidden size-10 items-center justify-center rounded-[8px] bg-secondary text-primary sm:flex">
-                    <step.icon className="size-5" strokeWidth={1.75} />
-                  </span>
-                  <div>
-                    <h3 className="font-semibold">{step.label}</h3>
-                    <p className="mt-1 text-sm leading-relaxed text-muted-foreground">
-                      {step.detail}
-                    </p>
-                  </div>
-                </li>
-              ))}
-            </ol>
           </div>
         </section>
 
