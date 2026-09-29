@@ -42,7 +42,7 @@ const MIN_POS = 0;
 const MAX_POS = 100;
 
 /** 棋盘格:透明结果区域的视觉约定,避免被误认为白底 */
-const CHECKER_STYLE = {
+export const CHECKER_STYLE = {
   backgroundImage:
     "linear-gradient(45deg, hsl(var(--muted)) 25%, transparent 25%), linear-gradient(-45deg, hsl(var(--muted)) 25%, transparent 25%), linear-gradient(45deg, transparent 75%, hsl(var(--muted)) 75%), linear-gradient(-45deg, transparent 75%, hsl(var(--muted)) 75%)",
   backgroundSize: "20px 20px",

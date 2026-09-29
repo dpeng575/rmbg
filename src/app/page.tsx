@@ -2,13 +2,16 @@ import Image from "next/image";
 import Link from "next/link";
 import {
   BadgeCheck,
+  Check,
   Contrast,
   Download,
   Focus,
   Infinity as InfinityIcon,
   LogIn,
+  MoveRight,
   Palette,
   ShieldCheck,
+  Sparkles,
   Sun,
   Upload,
 } from "lucide-react";
@@ -19,12 +22,20 @@ import {
   AccordionTrigger,
 } from "@/components/ui/accordion";
 import { BackgroundStudio } from "@/components/tool/BackgroundStudio";
-import { QualityShowcase } from "@/components/site/QualityShowcase";
+import { CHECKER_STYLE, QualityShowcase } from "@/components/site/QualityShowcase";
 import { SiteHeader } from "@/components/site/SiteHeader";
 import { SiteFooter } from "@/components/site/SiteFooter";
 import { FAQS, WHY_BULLETS } from "@/content/seo";
 
 const WHY_ICONS = [InfinityIcon, LogIn, BadgeCheck, ShieldCheck];
+
+/** Hero 特性 pill:文案与原「Free · No signup · ...」逐字对应,只是加视觉容器 */
+const HERO_FEATURES = [
+  { icon: Sparkles, label: "Free" },
+  { icon: Check, label: "No signup" },
+  { icon: Check, label: "No watermark" },
+  { icon: ShieldCheck, label: "Your image is processed in your browser" },
+];
 const HOW_STEPS = [
   {
     icon: Upload,
@@ -131,7 +142,7 @@ export default function Home() {
         <section className="relative overflow-hidden">
           <div
             aria-hidden
-            className="pointer-events-none absolute inset-x-0 top-0 h-[420px] bg-[radial-gradient(ellipse_55%_50%_at_50%_-10%,hsl(221_83%_53%/0.08),transparent)]"
+            className="pointer-events-none absolute inset-x-0 top-0 h-[520px] bg-[radial-gradient(ellipse_60%_55%_at_50%_-10%,hsl(221_83%_53%/0.10),transparent)]"
           />
           <div className="mx-auto max-w-3xl px-4 pt-14 text-center sm:px-6 sm:pt-18">
             <h1 className="animate-rise text-balance text-4xl font-extrabold tracking-tight sm:text-5xl">
@@ -144,10 +155,61 @@ export default function Home() {
               Upload a photo, remove its old background, and make it yours with
               a color, image or transparent finish.
             </p>
-            <div style={{ animationDelay: "160ms" }} className="animate-rise mt-5">
-              <p className="text-sm font-medium text-muted-foreground">
-                Free · No signup · No watermark · Your image is processed in your browser
-              </p>
+
+            {/* 特性 pill:把原来一行裸文本的信任点做成可扫读的徽章 */}
+            <ul
+              className="animate-rise mt-6 flex flex-wrap items-center justify-center gap-2 sm:gap-2.5"
+              style={{ animationDelay: "160ms" }}
+            >
+              {HERO_FEATURES.map(({ icon: Icon, label }) => (
+                <li
+                  key={label}
+                  className="inline-flex items-center gap-1.5 rounded-full border border-border bg-card px-3.5 py-1.5 text-sm font-medium shadow-sm"
+                >
+                  <Icon className="size-3.5 text-emerald-600" aria-hidden />
+                  {label}
+                </li>
+              ))}
+            </ul>
+
+            {/* Before / After 迷你视觉:参考 bgclear,首屏直接给出效果预期 */}
+            <div
+              className="animate-rise mt-10 flex items-center justify-center gap-3 sm:gap-5"
+              style={{ animationDelay: "240ms" }}
+            >
+              <figure className="relative aspect-[4/3] w-32 overflow-hidden rounded-xl border border-border bg-secondary shadow-sm sm:w-44">
+                <Image
+                  src="/samples/portrait.jpg"
+                  alt="Original portrait photo"
+                  fill
+                  sizes="176px"
+                  className="object-cover"
+                />
+                <figcaption className="absolute bottom-2 left-2 rounded-full bg-foreground/70 px-2 py-0.5 text-[10px] font-semibold text-background backdrop-blur-sm">
+                  Before
+                </figcaption>
+              </figure>
+              <span
+                className="flex size-8 shrink-0 items-center justify-center rounded-full bg-primary/10 text-primary sm:size-10"
+                aria-hidden
+              >
+                <MoveRight className="size-4 sm:size-5" />
+              </span>
+              <figure
+                className="relative aspect-[4/3] w-32 overflow-hidden rounded-xl border border-border shadow-sm sm:w-44"
+                style={CHECKER_STYLE}
+              >
+                <Image
+                  src="/samples/portrait-cutout.webp"
+                  alt="Portrait with its background removed"
+                  fill
+                  sizes="176px"
+                  className="object-cover"
+                />
+                <figcaption className="absolute bottom-2 left-2 rounded-full bg-background/85 px-2 py-0.5 text-[10px] font-semibold text-foreground backdrop-blur-sm">
+                  After
+                </figcaption>
+              </figure>
             </div>
           </div>
         </section>
