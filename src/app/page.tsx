@@ -30,6 +30,15 @@ import { FAQS, WHY_BULLETS } from "@/content/seo";
 
 const WHY_ICONS = [InfinityIcon, LogIn, BadgeCheck, ShieldCheck];
 
+/** #how 第二步专用:比 CHECKER_STYLE 更明显的方格底,突出"背景已透明" */
+const HOW_CHECKER_STYLE = {
+  backgroundImage:
+    "linear-gradient(45deg, hsl(var(--border)) 25%, transparent 25%), linear-gradient(-45deg, hsl(var(--border)) 25%, transparent 25%), linear-gradient(45deg, transparent 75%, hsl(var(--border)) 75%), linear-gradient(-45deg, transparent 75%, hsl(var(--border)) 75%)",
+  backgroundColor: "#ffffff",
+  backgroundSize: "28px 28px",
+  backgroundPosition: "0 0, 0 14px, 14px -14px, -14px 0px",
+};
+
 /** Hero 特性 pill:文案与原「Free · No signup · ...」逐字对应,只是加视觉容器 */
 const HERO_FEATURES = [
   { icon: Sparkles, label: "Free" },
@@ -248,7 +257,7 @@ export default function Home() {
                 <li key={step.label} className="text-center">
                   <figure
                     className="relative aspect-[24/25] overflow-hidden rounded-xl border border-border bg-secondary shadow-sm"
-                    style={step.checker ? CHECKER_STYLE : undefined}
+                    style={step.checker ? HOW_CHECKER_STYLE : undefined}
                   >
                     <Image
                       src={step.visual}
