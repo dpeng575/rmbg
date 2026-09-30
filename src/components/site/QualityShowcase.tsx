@@ -88,6 +88,13 @@ export function QualityShowcase() {
             Drag the handle to compare the original with the result. These
             samples were produced by the same model that runs in your browser.
           </p>
+          <p className="mx-auto mt-3 max-w-xl leading-relaxed text-muted-foreground">
+            Hair, fur, and semi-transparent edges are where most background
+            changers fall apart. SwitchBG keeps fine strands and soft outlines
+            intact, and it works on the full image rather than a preview-sized
+            copy. Zoom in before you download — what you see on screen is what
+            lands in the file.
+          </p>
         </div>
 
         <Tabs

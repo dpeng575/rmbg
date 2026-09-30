@@ -32,12 +32,32 @@ export const FAQS: { q: string; a: string }[] = [
     q: "What should I use if I need a remove.bg replacement?",
     a: "SwitchBG is a free alternative for personal, non-commercial background edits: no signup and no watermark. Image files are processed in your browser and are not uploaded by SwitchBG.",
   },
+  {
+    q: "Can I use SwitchBG as a photo background replacer for product photos?",
+    a: "Yes. Upload the product shot, cut it out, and place it on a pure white, a light grey, or one of our scene backgrounds. Marketplaces like Amazon, Shopify and Etsy usually ask for a plain, distraction-free backdrop — a solid color export satisfies that without a studio setup.",
+  },
+  {
+    q: "How do I change the background of a photo to white?",
+    a: "Upload the photo, pick the white swatch from the color options, and download. The subject stays cut out against a fully white background at up to 4096px on the long edge, which is what most marketplaces and ID photo requirements expect.",
+  },
+  {
+    q: "Can I change bg in bulk for several photos at once?",
+    a: "Yes — select multiple images when you upload and switch backgrounds across the set. Because each photo is processed on your device, there is no server queue and no daily limit on how many you run.",
+  },
+  {
+    q: "What is the best free photo background changer for Windows and Mac?",
+    a: "SwitchBG runs in the browser, so the same tool works on Windows, macOS, Linux, and mobile — no installer, no app store, no version to keep updated. Open switchbg.com and upload.",
+  },
+  {
+    q: "Is SwitchBG a good remove bg alternative for sellers and designers?",
+    a: "It is free with no credit limit, no signup, and no watermark, and it exports at up to 4096px on the long edge. If you process a steady volume of product or portrait photos, there is nothing to meter and no subscription to maintain.",
+  },
 ];
 
-/** H2④ Why SwitchBG 的四条原文,逐字渲染 */
+/** H2 Why SwitchBG 的四条原文,逐字渲染 */
 export const WHY_BULLETS: string[] = [
-  "Free and unlimited — no credits, no daily cap",
-  "No signup, no email — just upload and go",
-  "No watermark, HD output — up to 4096px on the long edge",
-  "Your image file is processed in your browser — SwitchBG does not upload it",
+  "Free and unlimited — no credits, no daily cap, no waiting for tomorrow's allowance.",
+  "No signup, no email — open the page and upload; there is no account to create or verify.",
+  "No watermark, HD output — up to 4096px on the long edge, every time.",
+  "Your images stay yours — the photo is processed on your device, and we do not use it for anything else.",
 ];

@@ -50,7 +50,8 @@ const HOW_STEPS = [
   {
     icon: Upload,
     label: "Upload a photo",
-    detail: "Choose a JPG, PNG or WebP from your device, or try one of the sample photos.",
+    detail:
+      "Drag an image onto the page, paste it from your clipboard, or click to browse your device. JPG, PNG and WebP all work, and you can upload several photos at once. The image is processed on your device, so your photo never has to leave it.",
     visual: "/samples/car6-before.jpg",
     alt: "Original car photo",
     checker: false,
@@ -58,7 +59,8 @@ const HOW_STEPS = [
   {
     icon: Palette,
     label: "Choose the new background",
-    detail: "Keep it transparent, pick a color or image, or upload a background of your own.",
+    detail:
+      "Choose a solid color, browse the background library, or upload your own. SwitchBG cuts out the subject first, so anything you place behind it sits correctly — no manual masking, no layer juggling. If you want to keep the background empty, export as a transparent PNG instead.",
     visual: "/samples/car6-after.webp",
     alt: "Car cut out from its background",
     checker: true,
@@ -66,7 +68,8 @@ const HOW_STEPS = [
   {
     icon: Download,
     label: "Check and download",
-    detail: "Compare the original and result, then download a clean image with no watermark.",
+    detail:
+      "Compare the original and the result side by side, zoom in to inspect the edges, then download at up to 4096px on the long edge. There is no watermark and no queue — switch backgrounds and export as many times as you like.",
     visual: "/samples/car6-step3.jpg",
     alt: "Car composited onto a new background, ready to download",
     checker: false,
@@ -79,21 +82,21 @@ const USE_CASES = [
     alt: "Portrait photo suitable for a clean profile image",
     title: "Profile photos",
     description:
-      "Replace a distracting background with a calm color or a setting that suits your profile.",
+      "Swapping a busy room for a plain wall or a soft gradient instantly makes a profile photo look deliberate. Try a light neutral for LinkedIn, or a warm tone for social profiles.",
   },
   {
     image: "/samples/pet-studio.jpg",
     alt: "Pet photo suitable for a sticker or keepsake",
     title: "Pets and keepsakes",
     description:
-      "Isolate a pet or person for a sticker, greeting card, wallpaper or family collage.",
+      "Cut a pet out of a cluttered living room and place it against grass, a woven blanket, or a clean white backdrop. The same trick works for keepsakes you want to list or share — isolate the object and give it a background that makes it the subject.",
   },
   {
     image: "/samples/product.jpg",
     alt: "Everyday object isolated for a creative project",
     title: "Creative projects",
     description:
-      "Lift an object from a photo for a school project, mood board or personal design.",
+      "Use the transparent export to drop a cutout into a poster, a slide deck, or a shop banner. Place it over any color you like without hitting the white box that comes with a normal photo.",
   },
 ];
 
@@ -101,17 +104,20 @@ const PHOTO_TIPS = [
   {
     icon: Contrast,
     title: "Create clear separation",
-    description: "A subject that contrasts with the background is easier to identify cleanly.",
+    description:
+      "The cutout engine looks for contrast between subject and background. A person in a light shirt against a dark wall is easy; a beige jumper on a beige sofa is hard. If you can, shoot against a background that differs in tone from your subject.",
   },
   {
     icon: Sun,
     title: "Use even lighting",
-    description: "Good light preserves hair, fur and small edge details without heavy shadows.",
+    description:
+      "Bright, even light keeps the edge between subject and background crisp. Backlit photos and harsh shadows make that edge ambiguous, and the result is a softer outline. Natural daylight from a window, or a phone flash bounced off a wall, is plenty.",
   },
   {
     icon: Focus,
     title: "Keep the subject in frame",
-    description: "Use a sharp image where the full subject is visible and not covered by other objects.",
+    description:
+      "Leave a little space around the subject — a few centimetres of shoulder, the top of the shoulders and the full head. Trimming too tightly means there is no edge for the tool to work with, and you lose room to reframe later.",
   },
 ];
 
@@ -171,8 +177,9 @@ export default function Home() {
               className="animate-rise mx-auto mt-5 max-w-2xl text-pretty text-base leading-relaxed text-muted-foreground sm:text-lg"
               style={{ animationDelay: "80ms" }}
             >
-              Upload a photo, remove its old background, and make it yours with
-              a color, image or transparent finish.
+              A free photo background replacer: upload a photo, swap its
+              background for a color, an image or a transparent PNG, and
+              download in seconds.
             </p>
 
             {/* 特性 pill:把原来一行裸文本的信任点做成可扫读的徽章 */}
@@ -236,6 +243,23 @@ export default function Home() {
 
         {/* —— 工具区(唯一的客户端岛) —— */}
         <BackgroundStudio />
+
+        {/* —— 背景选择说明(②) —— */}
+        <section id="backgrounds" className="scroll-mt-20 py-16 sm:py-20">
+          <div className="mx-auto max-w-2xl px-4 text-center sm:px-6">
+            <h2 className="text-2xl font-bold tracking-tight sm:text-3xl">
+              Pick a background
+            </h2>
+            <p className="mt-5 leading-relaxed text-muted-foreground">
+              You are not limited to a fixed set of presets. Pick a solid color
+              for a clean product shot, choose one of the background images in
+              our library, or upload a background of your own — a studio
+              backdrop, a desk, a garden. SwitchBG keeps the subject on its own
+              layer, so swapping the background out again takes one click and
+              never touches the edges of your photo.
+            </p>
+          </div>
+        </section>
 
         {/* —— 效果展示:分类示例 + 前后对比滑块 —— */}
         <QualityShowcase />
@@ -358,6 +382,11 @@ export default function Home() {
             <h2 className="text-center text-2xl font-bold tracking-tight sm:text-3xl">
               Why SwitchBG
             </h2>
+            <p className="mx-auto mt-5 max-w-xl text-center leading-relaxed text-muted-foreground">
+              Plenty of tools remove a background. Fewer let you put a new one
+              in without signing up, paying, or installing anything. SwitchBG
+              is built for the whole job:
+            </p>
             <ul className="mt-10 grid gap-4 sm:grid-cols-2">
               {WHY_BULLETS.map((bullet, i) => {
                 const Icon = WHY_ICONS[i] ?? BadgeCheck;
@@ -374,6 +403,25 @@ export default function Home() {
                 );
               })}
             </ul>
+          </div>
+        </section>
+
+        {/* —— 工作方式(⑧新增章节) —— */}
+        <section id="workflow" className="scroll-mt-20 bg-secondary/60 py-16 sm:py-20">
+          <div className="mx-auto max-w-3xl px-4 sm:px-6">
+            <h2 className="text-2xl font-bold tracking-tight sm:text-3xl">
+              A photo background replacer built for the way you actually work
+            </h2>
+            <p className="mt-5 leading-relaxed text-muted-foreground">
+              Most background replacers make you choose a preset and hope for
+              the best. SwitchBG cuts the subject out first, so you can drop in
+              any background — a color swatch, one of our library images, or a
+              file from your own device — and see the result on your photo
+              before you download. No layers, no masks, no editing timeline. If
+              you are replacing the background on a product shot for a
+              marketplace, or swapping a backdrop for a client, you get the
+              finished file without opening a photo editor.
+            </p>
           </div>
         </section>
 
@@ -403,8 +451,11 @@ export default function Home() {
           <div className="mx-auto flex max-w-4xl flex-col items-start justify-between gap-6 px-4 sm:flex-row sm:items-center sm:px-6">
             <div>
               <h2 className="text-xl font-bold tracking-tight">Ready to change a background?</h2>
-              <p className="mt-2 text-sm text-muted-foreground">
-                Pick a photo and see the result in your browser.
+              <p className="mt-2 max-w-xl text-sm leading-relaxed text-muted-foreground">
+                Whether you need one clean product photo, a batch of profile
+                pictures, or a cutout for a design of your own, the whole job
+                happens on one page. Upload an image, choose the background you
+                want, and download it — no account, no watermark, no wait.
               </p>
             </div>
             <Link
