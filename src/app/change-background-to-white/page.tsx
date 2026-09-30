@@ -224,8 +224,9 @@ export default function ChangeBackgroundToWhite() {
               for a résumé or a team page, and keep the whole set consistent.
               Need the reverse — a scene behind a transparent subject? Our
               guide to{" "}
+              {/* TODO: /add-background/ 建成后换回该最终地址 */}
               <Link
-                href="/add-background/"
+                href="/#how"
                 className="font-medium text-foreground underline underline-offset-4 hover:text-primary"
               >
                 adding a background to a photo
@@ -307,8 +308,9 @@ export default function ChangeBackgroundToWhite() {
             <p className="mt-6 leading-relaxed text-muted-foreground">
               Doing the general version — any background, not just white? The
               full walkthrough covers{" "}
+              {/* TODO: 教程页建成后 → /guide/how-to-change-background/ */}
               <Link
-                href="/how-to-change-background/"
+                href="/#how"
                 className="font-medium text-foreground underline underline-offset-4 hover:text-primary"
               >
                 how to change the background of a photo
@@ -368,8 +370,9 @@ export default function ChangeBackgroundToWhite() {
                     {q.startsWith("What should I use") && (
                       <>
                         {" "}
+                        {/* TODO: 汇总页建成后 → /alternatives/remove-bg-alternative/ */}
                         <Link
-                          href="/alternatives/remove-bg-alternative/"
+                          href="/"
                           className="font-medium text-foreground underline underline-offset-4 hover:text-primary"
                         >
                           remove.bg alternative

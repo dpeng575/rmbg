@@ -1,11 +1,18 @@
 import Link from "next/link";
 import Image from "next/image";
 
-const NAV = [
-  { label: "How it works", href: "/#how" },
-  { label: "Ideas", href: "/#ideas" },
-  { label: "Better results", href: "/#tips" },
-  { label: "FAQ", href: "/#faq" },
+/**
+ * 顶部导航:锚文本带目标词,服务端直出 <a>。
+ * 只挂已上线页面;下面 PENDING_NAV 是规划中的 4 个页面,每建成一个
+ * 就把对应项挪进 NAV(锚文本用导航精确词,页脚再用长尾变体)。
+ */
+const NAV = [{ label: "White Background", href: "/change-background-to-white/" }];
+
+const PENDING_NAV = [
+  { label: "Change Background", href: "/change-background/" },
+  { label: "Add Background", href: "/add-background/" },
+  { label: "Alternatives", href: "/alternatives/remove-bg-alternative/" },
+  { label: "Guides", href: "/guide/how-to-change-background/" },
 ];
 
 export function SiteHeader() {
