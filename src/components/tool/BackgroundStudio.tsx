@@ -209,8 +209,10 @@ function failureReason(code: ErrorCode): FailureReason {
   return code.toLowerCase() as FailureReason;
 }
 
-export function BackgroundStudio() {
-  const [state, dispatch] = useReducer(reducer, INITIAL);
+export function BackgroundStudio({ initialBackground }: { initialBackground?: BackgroundOption } = {}) {
+  const [state, dispatch] = useReducer(reducer, INITIAL, (init) =>
+    initialBackground ? { ...init, selected: initialBackground } : init,
+  );
   const [mode, setMode] = useState<Mode>("single");
   const modeRef = useRef<Mode>("single");
   const [dragging, setDragging] = useState(false);
