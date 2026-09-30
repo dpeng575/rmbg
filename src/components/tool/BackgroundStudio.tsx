@@ -946,7 +946,6 @@ export function BackgroundStudio() {
               )}
             </>
           )}
-          {state.phase !== "ready" && <Gallery selected={state.selected} onSelect={onSelect} onUpload={onUploadBackground} />}
         </div>
       </div>
       <ConfirmDialog request={confirmRequest} onClose={() => setConfirmRequest(null)} />

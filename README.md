@@ -6,7 +6,7 @@ Photo Background Changer — 上传照片，AI 在浏览器内抠图并替换背
 
 - **Next.js App Router + Tailwind + shadcn/ui**(组件在 `src/components/ui/`,经 registry 手动接入)
 - **SEO 服务端渲染**:TDK / H1 / 正文 4 个 H2 / 7 条 FAQ 全部静态 HTML,附 `SoftwareApplication` + `FAQPage` JSON-LD;只有工具区(`BackgroundStudio`)是 `'use client'` 岛
-- **状态机**:① idle(上传 + 背景图库预选)→ processing → ready(② 未选背景:棋盘格抠图 + 引导;③ 已选背景:实时合成 + 原图/结果切换 + Download HD)
+- **状态机**:① idle(仅上传)→ processing → ready(② 未选背景:棋盘格抠图 + 引导;③ 编辑态:背景图库/上传背景 + 实时合成 + 原图/结果切换 + Download HD)
 - **抠图**:`@imgly/background-removal`,模型默认从 imgly 官方 CDN 加载(部署包不含模型);设置 `NEXT_PUBLIC_MODEL_BASE_URL=/models/` 可切换自托管回退(COOP/COEP 跨域隔离 → WASM 多线程)
 - **合成**:[composite.ts](src/lib/composite.ts) canvas 引擎 —— 预览降采样(≤1400px 即时切换),下载时全分辨率导出(HD JPEG q95;透明走 PNG)
 - **背景图库**:纯色/渐变 CSS 即时渲染 + 18 张 2400w 照片([prepare-backgrounds.mjs](scripts/prepare-backgrounds.mjs) 下载,已入仓)
