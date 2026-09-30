@@ -130,7 +130,10 @@ function reducer(state: State, action: Action): State {
       return {
         ...state,
         phase: "processing",
-        progress: null,
+        // 默认进入 compute 清单视图:模型已缓存时库不发任何下载进度事件,
+        // 若用 null(被 ProcessingPanel 解释为下载中)会卡在 0% 直到出结果。
+        // 真要在下载时会立刻收到 download 事件并把视图切回百分比。
+        progress: { stage: "compute", stepIndex: 0 },
         error: null,
         originalUrl: action.originalUrl,
         originalName: action.name,
@@ -1061,9 +1064,11 @@ function ProcessingPanel({ phase, progress, onCancel }: {
   progress: ProgressInfo | null;
   onCancel: () => void;
 }) {
-  const downloading = progress === null || progress.stage === "download";
-  const pct = progress?.stage === "download" ? Math.floor(progress.pct * 100) : 0;
-  const stepIndex = progress?.stage === "compute" ? progress.stepIndex : -1;
+  // 只有真实收到 download 事件才算下载中;null/compute 都展示步骤清单
+  // (模型已缓存时库不发任何下载事件,旧逻辑会把界面卡在 0% 下载视图)
+  const downloading = progress?.stage === "download";
+  const pct = downloading ? Math.floor(progress.pct * 100) : 0;
+  const stepIndex = progress?.stage === "compute" ? progress.stepIndex : 0;
   return (
     <div data-status-focus tabIndex={-1} className="flex flex-col items-center py-12 text-center" aria-live="polite" aria-busy="true">
       <div className="animate-breathe flex size-14 items-center justify-center rounded-xl bg-primary/10 text-primary">
