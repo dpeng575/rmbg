@@ -7,12 +7,12 @@ import Image from "next/image";
  * 就把对应项挪进 NAV(锚文本用导航精确词,页脚再用长尾变体)。
  */
 const NAV = [
+  { label: "Change Background", href: "/change-background" },
   { label: "Add Background", href: "/add-background/" },
   { label: "White Background", href: "/change-background-to-white/" },
 ];
 
 const PENDING_NAV = [
-  { label: "Change Background", href: "/change-background/" },
   { label: "Alternatives", href: "/alternatives/remove-bg-alternative/" },
   { label: "Guides", href: "/guide/how-to-change-background/" },
 ];

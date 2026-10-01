@@ -19,8 +19,7 @@ const FOOTER_COLUMNS: {
   {
     title: "Tools",
     links: [
-      // TODO: 页面建成后 → /change-background/
-      { label: "Change the background of a photo", href: "/", finalHref: "/change-background/" },
+      { label: "Change the background of a photo", href: "/change-background" },
       { label: "Add a background to a photo", href: "/add-background/" },
       { label: "White background maker", href: "/change-background-to-white/" },
       // TODO: 页面建成后 → /transparent-background/

@@ -5,6 +5,11 @@ export default function sitemap(): MetadataRoute.Sitemap {
   return [
     { url: SITE_URL, changeFrequency: "weekly", priority: 1 },
     {
+      url: `${SITE_URL}/change-background`,
+      changeFrequency: "monthly",
+      priority: 0.9,
+    },
+    {
       url: `${SITE_URL}/change-background-to-white`,
       changeFrequency: "monthly",
       priority: 0.9,
