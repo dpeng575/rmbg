@@ -65,9 +65,10 @@ export function readAnalyticsConsent(): AnalyticsConsent | null {
 // gtag.js 只处理 Arguments 对象:push 普通数组会被静默忽略
 // (consent/js/config/事件全部无人消费),所以必须是普通 function
 // 并把 arguments 原样 push,不能 ...rest 转数组。
-// eslint-disable-next-line prefer-rest-params
 function queueGtag() {
   window.dataLayer ??= [];
+  // gtag.js requires the native Arguments object, not a rest-parameter array.
+  // eslint-disable-next-line prefer-rest-params
   window.dataLayer.push(arguments as unknown as unknown[]);
 }
 

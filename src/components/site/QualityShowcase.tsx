@@ -1,10 +1,10 @@
 "use client";
 
 import Image from "next/image";
-import Link from "next/link";
 import { useCallback, useRef, useState } from "react";
 import { MoveHorizontal } from "lucide-react";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { HashLink } from "@/components/site/HashLink";
 
 const SHOWCASE = [
   {
@@ -185,12 +185,12 @@ export function QualityShowcase() {
         </p>
 
         <div className="mt-6 text-center">
-          <Link
+          <HashLink
             href="/#tool"
             className="inline-flex items-center gap-2 text-sm font-semibold text-primary underline-offset-4 hover:underline"
           >
             Try it with your own photo
-          </Link>
+          </HashLink>
         </div>
       </div>
     </section>
