@@ -30,7 +30,7 @@ function TransparentSwatch() {
 export function Gallery({ selected, onSelect, onUpload, compact = false }: Props) {
   const inputId = "custom-background-upload";
   return (
-    <div className={compact ? "" : "mt-10"}>
+    <div className={compact ? "w-full min-w-0" : "mt-10 w-full min-w-0"}>
       <div className="flex flex-wrap items-center justify-between gap-2">
         <h2 className="text-sm font-semibold text-foreground">
           Pick a background
@@ -44,7 +44,7 @@ export function Gallery({ selected, onSelect, onUpload, compact = false }: Props
       <div
         role="group"
         aria-label="Quick backgrounds"
-        className="mt-3 flex flex-wrap gap-2"
+        className="mt-3 flex min-w-0 flex-wrap gap-2"
       >
         {QUICK_BACKGROUNDS.map((bg) => {
           const active = selected?.id === bg.id;
@@ -126,7 +126,7 @@ function BackgroundGrid({
   compact: boolean;
 }) {
   return (
-    <div className={`mt-4 grid grid-cols-3 gap-2.5 ${compact ? "" : "sm:grid-cols-6"}`}>
+    <div className={`mt-4 grid min-w-0 grid-cols-3 gap-2.5 ${compact ? "" : "sm:grid-cols-6"}`}>
       {LIBRARY[category].map((bg) => {
         const active = selected?.id === bg.id;
         return (
@@ -149,7 +149,7 @@ function BackgroundGrid({
               alt={bg.label}
               loading="lazy"
               draggable={false}
-              className="size-full object-cover transition-transform duration-200 group-hover:scale-[1.04]"
+              className="size-full max-w-full object-cover transition-transform duration-200 group-hover:scale-[1.04]"
             />
             {active && (
               <span className="absolute top-1.5 right-1.5 flex size-5 items-center justify-center rounded-full bg-primary text-primary-foreground">

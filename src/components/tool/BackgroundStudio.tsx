@@ -1145,17 +1145,17 @@ function ReadyPanel({ state, transparentView, onCompare, onReset, onDownload, on
         </div>
       </div>
       {state.cutout.downsampled && <p className="mt-3 text-xs text-muted-foreground" role="status">This large image was resized for reliable in-browser processing.</p>}
-      <div className="relative mt-4 flex justify-center">
-        <div className={`relative inline-block min-h-40 min-w-40 max-w-full overflow-hidden rounded-xl border border-border ${state.compare !== "original" && transparentView ? "checkerboard" : ""}`}>
+      <div className="relative mt-4 flex w-full min-w-0 justify-center">
+        <div className={`relative flex min-h-40 min-w-0 max-w-full items-center justify-center overflow-hidden rounded-xl border border-border ${state.compare !== "original" && transparentView ? "checkerboard" : ""}`}>
           {state.compare === "original" && state.originalUrl ? (
             // eslint-disable-next-line @next/next/no-img-element
-            <img src={state.originalUrl} alt="Original photo" className="mx-auto block max-h-[62vh] w-auto max-w-full" />
+            <img src={state.originalUrl} alt="Original photo" className="mx-auto block max-h-[62vh] w-auto max-w-full object-contain" />
           ) : transparentView ? (
             // eslint-disable-next-line @next/next/no-img-element
-            <img src={state.cutout.url} alt="Cutout with transparent background" className="mx-auto block max-h-[62vh] w-auto max-w-full" />
+            <img src={state.cutout.url} alt="Cutout with transparent background" className="mx-auto block max-h-[62vh] w-auto max-w-full object-contain" />
           ) : state.previewUrl ? (
             // eslint-disable-next-line @next/next/no-img-element
-            <img src={state.previewUrl} alt="Photo with new background" className="mx-auto block max-h-[62vh] w-auto max-w-full" />
+            <img src={state.previewUrl} alt="Photo with new background" className="mx-auto block max-h-[62vh] w-auto max-w-full object-contain" />
           ) : (
             <div className="flex h-64 w-64 items-center justify-center"><Loader2 className="size-6 animate-spin text-muted-foreground" /></div>
           )}
