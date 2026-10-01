@@ -121,6 +121,51 @@ const PHOTO_TIPS = [
   },
 ];
 
+/** 首页内页入口卡片:目标页 3 个在建(/change-background/、/add-background/、
+ *  /alternatives/),上线前这三张卡会 404,建一个自动生效一个 */
+const TOOL_CARDS = [
+  {
+    href: "/change-background/",
+    h3: "Change any background",
+    desc: "Swap the background of a photo for a colour, a library image, or a transparent PNG.",
+    anchor: "change the background of a photo",
+    before: "/samples/car6-before.jpg",
+    after: "/samples/car6-after.webp",
+    beforeChecker: false,
+    afterChecker: true,
+  },
+  {
+    href: "/add-background/",
+    h3: "Add a background",
+    desc: "Starting from a cutout or a transparent PNG? Drop in a backdrop and finish the shot.",
+    anchor: "add a background to a photo",
+    before: "/samples/car6-after.webp",
+    after: "/samples/car6-step3.jpg",
+    beforeChecker: true,
+    afterChecker: false,
+  },
+  {
+    href: "/change-background-to-white/",
+    h3: "Change a background to white",
+    desc: "Pure white, ready for marketplace listings, ID photos and catalogue shots.",
+    anchor: "change a background to white",
+    before: "/samples/product.jpg",
+    after: "/samples/product-white.webp",
+    beforeChecker: false,
+    afterChecker: false,
+  },
+  {
+    href: "/alternatives/remove-bg-alternative/",
+    h3: "Coming from remove.bg?",
+    desc: "What to expect now that the site is closing, and how to move your workflow over.",
+    anchor: "remove.bg alternatives",
+    before: "/samples/portrait.jpg",
+    after: "/samples/portrait-cutout.webp",
+    beforeChecker: false,
+    afterChecker: true,
+  },
+];
+
 /** 结构化数据:SoftwareApplication + FAQPage(答案与页面可见文本逐字一致) */
 const softwareAppJsonLd = {
   "@context": "https://schema.org",
@@ -422,6 +467,68 @@ export default function Home() {
               marketplace, or swapping a backdrop for a client, you get the
               finished file without opening a photo editor.
             </p>
+          </div>
+        </section>
+
+        {/* —— 内页入口卡片:四张卡=before/after 缩略图+H3+一句话+锚文本 —— */}
+        <section id="ways" className="scroll-mt-20 py-16 sm:py-20">
+          <div className="mx-auto max-w-6xl px-4 sm:px-6">
+            <div className="mx-auto max-w-2xl text-center">
+              <h2 className="text-2xl font-bold tracking-tight sm:text-3xl">
+                More ways to change a background
+              </h2>
+              <p className="mt-4 leading-relaxed text-muted-foreground">
+                Same tool, different starting point — pick the job that matches
+                your photo.
+              </p>
+            </div>
+            <div className="mt-12 grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
+              {TOOL_CARDS.map((card) => (
+                <Link
+                  key={card.href}
+                  href={card.href}
+                  className="group block rounded-xl border border-border bg-card p-4 transition-shadow duration-150 hover:shadow-md"
+                >
+                  <div className="flex gap-1.5" aria-hidden>
+                    <span
+                      className={`relative h-24 w-1/2 overflow-hidden rounded-md border border-border ${card.beforeChecker ? "" : "bg-secondary"}`}
+                      style={card.beforeChecker ? CHECKER_STYLE : undefined}
+                    >
+                      <Image
+                        src={card.before}
+                        alt=""
+                        fill
+                        sizes="150px"
+                        className="object-cover"
+                      />
+                    </span>
+                    <span
+                      className={`relative h-24 w-1/2 overflow-hidden rounded-md border border-border ${card.afterChecker ? "" : "bg-secondary"}`}
+                      style={card.afterChecker ? CHECKER_STYLE : undefined}
+                    >
+                      <Image
+                        src={card.after}
+                        alt=""
+                        fill
+                        sizes="150px"
+                        className="object-cover"
+                      />
+                    </span>
+                  </div>
+                  <h3 className="mt-4 font-semibold">{card.h3}</h3>
+                  <p className="mt-1.5 text-sm leading-relaxed text-muted-foreground">
+                    {card.desc}
+                  </p>
+                  <span className="mt-3 inline-flex items-center gap-1 text-sm font-medium text-primary">
+                    {card.anchor}
+                    <MoveRight
+                      className="size-3.5 transition-transform duration-150 group-hover:translate-x-0.5"
+                      aria-hidden
+                    />
+                  </span>
+                </Link>
+              ))}
+            </div>
           </div>
         </section>
 
