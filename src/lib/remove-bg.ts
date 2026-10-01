@@ -9,8 +9,9 @@ import type { ErrorCode, ProgressInfo, StageTimings } from "@/types";
  * - progress 回调:下载阶段 key 形如 "fetch:<资源>"(current/total 为字节,
  *   跨多个资源多次触发);推理阶段只有 4 个里程碑
  *   compute:decode → inference → mask → encode,没有细粒度进度。
- * - CPU/WASM 推理跑在主线程(proxyToWorker 对 CPU 有已知 bug,不开);
- *   device: 'gpu' 时库内部检测 WebGPU,不支持则自动回退 wasm。
+ * - CPU/WASM 推理跑在主线程(proxyToWorker 对 CPU 有已知 bug,不开)。
+ * - 移动端 WebGPU 驱动稳定性差，统一使用 CPU/WASM，避免 GPU device loss
+ *   让 Safari/Chrome 标签页被系统回收并表现为页面刷新。
  */
 
 const STEP_INDEX: Record<string, number> = {
@@ -107,7 +108,7 @@ export async function removeBg(
 
   const blob = await withOrtNoiseSilenced(() =>
     removeBackground(source, {
-      device: "gpu", // 内部检测 WebGPU,不支持自动回退 wasm
+      device: "cpu", // 移动端禁用 WebGPU，避免驱动崩溃导致页面刷新
       model: "isnet_quint8", // ~42MB,首载友好;输出质量已足够
       publicPath: resolveModelPublicPath(),
       fetchArgs: signal ? { signal } : undefined,
