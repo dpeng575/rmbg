@@ -3,18 +3,14 @@ import Image from "next/image";
 
 /**
  * 顶部导航:锚文本带目标词,服务端直出 <a>。
- * 只挂已上线页面;下面 PENDING_NAV 是规划中的 4 个页面,每建成一个
- * 就把对应项挪进 NAV(锚文本用导航精确词,页脚再用长尾变体)。
+ * V2.0 五个页面已全部上线,导航全量挂载。
  */
 const NAV = [
   { label: "Change Background", href: "/change-background" },
-  { label: "Add Background", href: "/add-background/" },
-  { label: "White Background", href: "/change-background-to-white/" },
-  { label: "Alternatives", href: "/alternatives/remove-bg-alternative/" },
-];
-
-const PENDING_NAV = [
-  { label: "Guides", href: "/guide/how-to-change-background/" },
+  { label: "Add Background", href: "/add-background" },
+  { label: "White Background", href: "/change-background-to-white" },
+  { label: "Alternatives", href: "/alternatives/remove-bg-alternative" },
+  { label: "Guides", href: "/guide/how-to-change-background" },
 ];
 
 export function SiteHeader() {

@@ -51,8 +51,7 @@ const FOOTER_COLUMNS: {
   {
     title: "Guides",
     links: [
-      // TODO: 教程页建成后 → /guide/how-to-change-background/
-      { label: "How to change the background of a photo", href: "/#how", finalHref: "/guide/how-to-change-background/" },
+      { label: "How to change the background of a photo", href: "/guide/how-to-change-background" },
       { label: "Change a background to white", href: "/change-background-to-white/" },
       { label: "How it works in three steps", href: "/#how" },
       { label: "Photo tips for cleaner cutouts", href: "/#tips" },

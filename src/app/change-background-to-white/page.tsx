@@ -338,9 +338,8 @@ export default function ChangeBackgroundToWhite() {
             </p>
             <p className="mt-6 leading-relaxed text-muted-foreground">
               For photographing the subject in the first place, our{" "}
-              {/* TODO: 教程页建成后 → /guide/how-to-change-background/ */}
               <Link
-                href="/#how"
+                href="/guide/how-to-change-background"
                 className="font-medium text-foreground underline underline-offset-4 hover:text-primary"
               >
                 step-by-step guide to changing a photo&apos;s background

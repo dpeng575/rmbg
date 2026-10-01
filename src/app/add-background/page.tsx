@@ -164,7 +164,7 @@ export default function AddBackground() {
               the right tool. If instead you have an untouched photo and want
               what&apos;s behind the subject replaced,{" "}
               <Link
-                href="/change-background/"
+                href="/change-background"
                 className="font-medium text-foreground underline underline-offset-4 hover:text-primary"
               >
                 change the background first
