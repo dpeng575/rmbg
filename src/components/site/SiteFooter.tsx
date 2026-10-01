@@ -69,9 +69,9 @@ export function SiteFooter() {
         >
           {FOOTER_COLUMNS.map((column) => (
             <div key={column.title}>
-              <h2 className="text-sm font-semibold text-foreground">
+              <p className="text-sm font-semibold text-foreground">
                 {column.title}
-              </h2>
+              </p>
               <ul className="mt-4 space-y-2.5">
                 {column.links.map((link) => (
                   <li key={link.label}>

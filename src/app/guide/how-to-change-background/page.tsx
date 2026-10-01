@@ -14,7 +14,7 @@ export const metadata: Metadata = {
 const GUIDE_FAQS: { q: string; a: string }[] = [
   {
     q: "How do I change the background of a photo for free?",
-    a: "Upload the photo, let the subject be separated from the original background, choose a new one, and download. That's free here, with no watermark and no account — start with a photo.",
+    a: "Upload the photo, let the subject be separated from the original background, choose a new one, and download. That's free here, with no watermark and no account.",
   },
   {
     q: "What's the easiest way to change a photo background?",
@@ -145,7 +145,7 @@ const DECISION_ROWS: {
   {
     want: "A PNG with nothing behind it, for design work",
     how: "Remove the background and stop there",
-    whereLabel: "The tool on our home page",
+    whereLabel: "photo background changer",
     whereHref: "/",
   },
 ];
@@ -533,7 +533,15 @@ export default function HowToChangeBackground() {
               runs on your machine — your photos aren&apos;t processed by an
               online service, which matters for client work and anything under
               an NDA. The browser route has the same property, minus the
-              install and the learning curve.
+              install and the learning curve — which is why this site works as
+              a{" "}
+              <Link
+                href="/"
+                className="font-medium text-foreground underline underline-offset-4 hover:text-primary"
+              >
+                photo background changer
+              </Link>{" "}
+              for everything from one headshot to a whole catalogue.
             </p>
           </div>
         </section>

@@ -67,7 +67,7 @@ const WHITE_FAQS: { q: string; a: string }[] = [
   },
   {
     q: "Does remove.bg still work for this?",
-    a: "remove.bg's standalone site is closing — its own banner says the site \"will no longer be available from 1 December 2026\". If you were relying on it for white-background listings, here's what still works and how to move your photos over.",
+    a: "remove.bg's standalone site is closing — its own banner says the site \"will no longer be available from 1 December 2026\".",
   },
 ];
 
@@ -394,7 +394,14 @@ export default function ChangeBackgroundToWhite() {
               answer you want when the images are client work, ID photos or
               anything under an NDA. You keep the parts that need judgement —
               which white, what crop, what size — and hand off the parts that
-              don&apos;t.
+              don&apos;t. And when you need a different finish, the same{" "}
+              <Link
+                href="/"
+                className="font-medium text-foreground underline underline-offset-4 hover:text-primary"
+              >
+                photo background changer
+              </Link>{" "}
+              covers every background, not just white.
             </p>
           </div>
         </section>

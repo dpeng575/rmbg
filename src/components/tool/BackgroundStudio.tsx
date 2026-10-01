@@ -188,9 +188,9 @@ type BatchItem = {
 type InputSource = { blob: Blob; name: string };
 
 const SAMPLES = [
-  { src: "/samples/portrait.jpg", label: "Portrait" },
-  { src: "/samples/product.jpg", label: "Product" },
-  { src: "/samples/pet-studio.jpg", label: "Pet" },
+  { src: "/samples/portrait.jpg", label: "Portrait", width: 1200, height: 1800 },
+  { src: "/samples/product.jpg", label: "Product", width: 1200, height: 800 },
+  { src: "/samples/pet-studio.jpg", label: "Pet", width: 960, height: 810 },
 ] as const;
 
 function errorCode(error: unknown): ErrorCode {
@@ -1050,7 +1050,14 @@ function UploadPanel({ error, dragging, onChoose, onDragEnter, onDragLeave, onDr
             {SAMPLES.map((sample) => (
               <button key={sample.src} type="button" onClick={() => void onSample(sample.src, sample.label)} className="group relative size-14 overflow-hidden rounded-lg border border-border transition-transform duration-150 hover:-translate-y-0.5">
                 {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img src={sample.src} alt={`Sample: ${sample.label}`} className="size-full object-cover" loading="lazy" />
+                <img
+                  src={sample.src}
+                  alt={`Sample: ${sample.label}`}
+                  width={sample.width}
+                  height={sample.height}
+                  className="size-full object-cover"
+                  loading="lazy"
+                />
                 <span className="absolute inset-x-0 bottom-0 bg-foreground/55 py-px text-center text-[10px] font-medium text-white backdrop-blur-sm">{sample.label}</span>
               </button>
             ))}

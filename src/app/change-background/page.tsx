@@ -209,23 +209,25 @@ export default function ChangeBackground() {
                 <h3 className="mt-8 text-lg font-semibold">
                   {`0${i + 1} · ${step.name}`}
                 </h3>
-                <p className="mt-2 leading-relaxed text-muted-foreground">
-                  {step.text}
-                  {i === 1 && (
-                    <>
-                      {" "}
-                      Need a{" "}
-                      <Link
-                        href="/change-background-to-white"
-                        className="font-medium text-foreground underline underline-offset-4 hover:text-primary"
-                      >
-                        white background
-                      </Link>{" "}
-                      for a catalogue or an ID photo? That page is one click
-                      away.
-                    </>
-                  )}
-                </p>
+                {i === 1 ? (
+                  <p className="mt-2 leading-relaxed text-muted-foreground">
+                    Pick a flat colour, a gradient, one of your own images, or
+                    transparency. If you need a white background for a
+                    catalogue or an ID photo, our{" "}
+                    <Link
+                      href="/change-background-to-white"
+                      className="font-medium text-foreground underline underline-offset-4 hover:text-primary"
+                    >
+                      change background to white page
+                    </Link>{" "}
+                    is one click away. The framing follows your photo — the
+                    finished image keeps the subject&apos;s dimensions.
+                  </p>
+                ) : (
+                  <p className="mt-2 leading-relaxed text-muted-foreground">
+                    {step.text}
+                  </p>
+                )}
               </div>
             ))}
           </div>
@@ -294,7 +296,14 @@ export default function ChangeBackground() {
               install, no plugin to update, no account to create and no
               subscription to cancel later. You keep the parts that need
               judgement — which backdrop, what crop, what size — and hand off
-              the parts that don&apos;t.
+              the parts that don&apos;t. In short: SwitchBG is a free{" "}
+              <Link
+                href="/"
+                className="font-medium text-foreground underline underline-offset-4 hover:text-primary"
+              >
+                photo background changer
+              </Link>{" "}
+              that runs entirely in your browser.
             </p>
           </div>
         </section>

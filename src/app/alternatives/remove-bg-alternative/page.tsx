@@ -30,7 +30,7 @@ const SHUTDOWN_FAQS: { q: string; a: string }[] = [
   },
   {
     q: "Is there a free remove.bg alternative?",
-    a: "Yes. Several on the list above have free tiers with limits, and our photo background changer is free with no watermark and no account. Try SwitchBG's photo background changer.",
+    a: "Yes. Several on the list above have free tiers with limits, and our photo background changer is free with no watermark and no account.",
   },
   {
     q: "Can I still use remove.bg's API?",
