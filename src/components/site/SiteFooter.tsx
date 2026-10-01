@@ -40,8 +40,8 @@ const FOOTER_COLUMNS: {
   {
     title: "Coming from remove.bg",
     links: [
-      // TODO: 页面建成后 → /alternatives/remove-bg-alternative/
-      { label: "remove.bg alternatives", href: "/change-background-to-white/#faq", finalHref: "/alternatives/remove-bg-alternative/" },
+      // TODO: 汇总页建成后 → /alternatives/best-free-alternatives/
+      { label: "remove.bg alternatives", href: "/alternatives/remove-bg-alternative/" },
       // TODO: 关停公告页建成后 → /remove-bg-shutdown/
       { label: "remove.bg shutdown", href: "/change-background-to-white/#faq", finalHref: "/remove-bg-shutdown/" },
       // TODO: 汇总页建成后 → /alternatives/best-free-alternatives/

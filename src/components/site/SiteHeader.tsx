@@ -10,10 +10,10 @@ const NAV = [
   { label: "Change Background", href: "/change-background" },
   { label: "Add Background", href: "/add-background/" },
   { label: "White Background", href: "/change-background-to-white/" },
+  { label: "Alternatives", href: "/alternatives/remove-bg-alternative/" },
 ];
 
 const PENDING_NAV = [
-  { label: "Alternatives", href: "/alternatives/remove-bg-alternative/" },
   { label: "Guides", href: "/guide/how-to-change-background/" },
 ];
 

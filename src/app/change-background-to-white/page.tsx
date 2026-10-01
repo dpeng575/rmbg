@@ -369,9 +369,8 @@ export default function ChangeBackgroundToWhite() {
                     {q.startsWith("What should I use") && (
                       <>
                         {" "}
-                        {/* TODO: 汇总页建成后 → /alternatives/remove-bg-alternative/ */}
                         <Link
-                          href="/"
+                          href="/alternatives/remove-bg-alternative/"
                           className="font-medium text-foreground underline underline-offset-4 hover:text-primary"
                         >
                           remove.bg alternative
