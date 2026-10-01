@@ -103,6 +103,7 @@ export async function removeBg(
   const stageStart = performance.now();
   const marks = new Map<number, number>(); // stepIndex → 首次进入时间戳
   const fetchProgress = new Map<string, { cur: number; total: number }>();
+  let lastDownloadPct = 0;
 
   if (signal?.aborted) throw new DOMException("Cancelled", "AbortError");
 
@@ -122,7 +123,9 @@ export async function removeBg(
             cur += v.cur;
             tot += v.total;
           }
-          onProgress({ stage: "download", pct: tot > 0 ? cur / tot : 0 });
+          const pct = tot > 0 ? Math.min(0.99, cur / tot) : 0;
+          lastDownloadPct = Math.max(lastDownloadPct, pct);
+          onProgress({ stage: "download", pct: lastDownloadPct });
         } else {
           const step = key.split(":")[1] ?? "";
           const idx = STEP_INDEX[step] ?? 0;
