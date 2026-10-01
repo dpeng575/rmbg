@@ -6,11 +6,13 @@ import Image from "next/image";
  * 只挂已上线页面;下面 PENDING_NAV 是规划中的 4 个页面,每建成一个
  * 就把对应项挪进 NAV(锚文本用导航精确词,页脚再用长尾变体)。
  */
-const NAV = [{ label: "White Background", href: "/change-background-to-white/" }];
+const NAV = [
+  { label: "Add Background", href: "/add-background/" },
+  { label: "White Background", href: "/change-background-to-white/" },
+];
 
 const PENDING_NAV = [
   { label: "Change Background", href: "/change-background/" },
-  { label: "Add Background", href: "/add-background/" },
   { label: "Alternatives", href: "/alternatives/remove-bg-alternative/" },
   { label: "Guides", href: "/guide/how-to-change-background/" },
 ];

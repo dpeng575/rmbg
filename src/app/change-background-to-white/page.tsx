@@ -224,9 +224,8 @@ export default function ChangeBackgroundToWhite() {
               for a résumé or a team page, and keep the whole set consistent.
               Need the reverse — a scene behind a transparent subject? Our
               guide to{" "}
-              {/* TODO: /add-background/ 建成后换回该最终地址 */}
               <Link
-                href="/#how"
+                href="/add-background/"
                 className="font-medium text-foreground underline underline-offset-4 hover:text-primary"
               >
                 adding a background to a photo
