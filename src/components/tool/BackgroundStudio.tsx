@@ -375,7 +375,11 @@ export function BackgroundStudio({ initialBackground }: { initialBackground?: Ba
         const { blob: cutoutBlob } = await removeBg(
           prepared.blob,
           (progress) => {
-            if (taskId === taskIdRef.current) dispatch({ type: "progress", progress });
+            if (taskId === taskIdRef.current) {
+              window.setTimeout(() => {
+                if (taskId === taskIdRef.current) dispatch({ type: "progress", progress });
+              }, progress.stage === "compute" ? 120 : 0);
+            }
           },
           controller.signal,
         );
