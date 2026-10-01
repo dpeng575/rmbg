@@ -1,4 +1,6 @@
 import Link from "next/link";
+
+import { HashLink } from "@/components/site/HashLink";
 import Image from "next/image";
 
 /**
@@ -36,12 +38,12 @@ export function SiteHeader() {
           ))}
         </nav>
 
-        <Link
+        <HashLink
           href="/#tool"
           className="rounded-full bg-accent px-5 py-2 text-sm font-semibold text-accent-foreground shadow-sm transition-transform duration-150 hover:scale-[1.03] active:scale-[0.98]"
         >
           Change a background
-        </Link>
+        </HashLink>
       </div>
     </header>
   );

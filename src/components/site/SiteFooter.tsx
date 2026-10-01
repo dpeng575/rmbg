@@ -1,4 +1,6 @@
 import Link from "next/link";
+
+import { HashLink } from "@/components/site/HashLink";
 import { AnalyticsSettingsButton } from "@/components/analytics/AnalyticsSettingsButton";
 
 const LEGAL_LINKS = [
@@ -75,12 +77,21 @@ export function SiteFooter() {
               <ul className="mt-4 space-y-2.5">
                 {column.links.map((link) => (
                   <li key={link.label}>
-                    <Link
-                      href={link.href}
-                      className="text-sm text-muted-foreground hover:text-foreground"
-                    >
-                      {link.label}
-                    </Link>
+                    {link.href.includes("#") ? (
+                      <HashLink
+                        href={link.href}
+                        className="text-sm text-muted-foreground hover:text-foreground"
+                      >
+                        {link.label}
+                      </HashLink>
+                    ) : (
+                      <Link
+                        href={link.href}
+                        className="text-sm text-muted-foreground hover:text-foreground"
+                      >
+                        {link.label}
+                      </Link>
+                    )}
                   </li>
                 ))}
               </ul>

@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { SiteHeader } from "@/components/site/SiteHeader";
+import { HashLink } from "@/components/site/HashLink";
 import { SiteFooter } from "@/components/site/SiteFooter";
 
 export const metadata: Metadata = {
@@ -197,12 +198,11 @@ export default function HowToChangeBackground() {
               <p className="text-sm font-medium text-foreground">
                 Try it on your own photo
               </p>
-              <Link
-                href="/change-background/#tool"
+              <HashLink href="/change-background/#tool"
                 className="inline-flex items-center gap-2 rounded-[8px] bg-accent px-5 py-2.5 text-sm font-semibold text-accent-foreground shadow-sm transition-transform duration-150 hover:scale-[1.03] active:scale-[0.98]"
               >
                 Upload a photo
-              </Link>
+              </HashLink>
             </div>
           </div>
         </section>

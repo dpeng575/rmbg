@@ -23,6 +23,7 @@ import {
   AccordionTrigger,
 } from "@/components/ui/accordion";
 import { BackgroundStudio } from "@/components/tool/BackgroundStudio";
+import { HashLink } from "@/components/site/HashLink";
 import { CHECKER_STYLE, QualityShowcase } from "@/components/site/QualityShowcase";
 import { SiteHeader } from "@/components/site/SiteHeader";
 import { SiteFooter } from "@/components/site/SiteFooter";
@@ -350,13 +351,12 @@ export default function Home() {
               ))}
             </ol>
             <div className="mt-12 text-center">
-              <Link
-                href="/#tool"
+              <HashLink href="/#tool"
                 className="inline-flex items-center gap-2 rounded-[8px] bg-accent px-5 py-3 text-sm font-semibold text-accent-foreground shadow-sm transition-transform duration-150 hover:scale-[1.03] active:scale-[0.98]"
               >
                 <Upload className="size-4" aria-hidden />
                 Choose a photo
-              </Link>
+              </HashLink>
             </div>
           </div>
         </section>
@@ -565,13 +565,12 @@ export default function Home() {
                 want, and download it — no account, no watermark, no wait.
               </p>
             </div>
-            <Link
-              href="/#tool"
+            <HashLink href="/#tool"
               className="inline-flex items-center gap-2 rounded-[8px] bg-accent px-5 py-3 text-sm font-semibold text-accent-foreground shadow-sm"
             >
               <Upload className="size-4" aria-hidden />
               Choose a photo
-            </Link>
+            </HashLink>
           </div>
         </section>
       </main>
