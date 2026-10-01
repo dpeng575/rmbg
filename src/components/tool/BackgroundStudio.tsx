@@ -37,7 +37,7 @@ import {
 } from "@/lib/analytics";
 import { previewSize, renderComposite } from "@/lib/composite";
 import { saveBlob, formatElapsed, resultFilename } from "@/lib/download";
-import { COMPUTE_STEPS, classifyError, removeBg } from "@/lib/remove-bg";
+import { PROCESS_STEPS, classifyError, isModelReady, removeBg } from "@/lib/remove-bg";
 import {
   ERROR_COPY,
   ImageValidationError,
@@ -130,10 +130,8 @@ function reducer(state: State, action: Action): State {
       return {
         ...state,
         phase: "processing",
-        // 默认进入 compute 清单视图:模型已缓存时库不发任何下载进度事件,
-        // 若用 null(被 ProcessingPanel 解释为下载中)会卡在 0% 直到出结果。
-        // 真要在下载时会立刻收到 download 事件并把视图切回百分比。
-        progress: { stage: "compute", stepIndex: 0 },
+        // 模型已在内存中时直接从解码开始,不闪现"加载模型"
+        progress: { step: isModelReady() ? 1 : 0 },
         error: null,
         originalUrl: action.originalUrl,
         originalName: action.name,
@@ -375,11 +373,7 @@ export function BackgroundStudio({ initialBackground }: { initialBackground?: Ba
         const { blob: cutoutBlob } = await removeBg(
           prepared.blob,
           (progress) => {
-            if (taskId === taskIdRef.current) {
-              window.setTimeout(() => {
-                if (taskId === taskIdRef.current) dispatch({ type: "progress", progress });
-              }, progress.stage === "compute" ? 120 : 0);
-            }
+            if (taskId === taskIdRef.current) dispatch({ type: "progress", progress });
           },
           controller.signal,
         );
@@ -939,7 +933,7 @@ export function BackgroundStudio({ initialBackground }: { initialBackground?: Ba
                 </div>
               )}
               {ready && state.cutout && (
-                <div className="grid gap-8 lg:grid-cols-[minmax(0,1.7fr)_minmax(19rem,0.8fr)] lg:items-start">
+                <div className="grid grid-cols-[minmax(0,1fr)] gap-8 lg:grid-cols-[minmax(0,1.7fr)_minmax(19rem,0.8fr)] lg:items-start">
                   <ReadyPanel
                     state={{ ...state, cutout: state.cutout }}
                     transparentView={Boolean(transparentView)}
@@ -1077,43 +1071,47 @@ function ProcessingPanel({ phase, progress, onCancel }: {
   progress: ProgressInfo | null;
   onCancel: () => void;
 }) {
-  // 只有真实收到 download 事件才算下载中;null/compute 都展示步骤清单
-  // (模型已缓存时库不发任何下载事件,旧逻辑会把界面卡在 0% 下载视图)
-  const downloading = progress?.stage === "download";
-  const pct = downloading ? Math.floor(progress.pct * 100) : 0;
-  const stepIndex = progress?.stage === "compute" ? progress.stepIndex : 0;
+  const step = phase === "validating" ? -1 : progress?.step ?? 0;
+  const pct = progress?.step === 0 && progress.pct !== undefined ? Math.floor(progress.pct * 100) : null;
+  const heading = phase === "validating"
+    ? "Reading your photo…"
+    : step === 0
+      ? "Loading the AI model…"
+      : "Removing the background…";
   return (
     <div data-status-focus tabIndex={-1} className="flex flex-col items-center py-12 text-center" aria-live="polite" aria-busy="true">
-      <div className="animate-breathe flex size-14 items-center justify-center rounded-xl bg-primary/10 text-primary">
-        <Layers className="size-6" strokeWidth={1.75} />
+      <div className="relative flex size-16 items-center justify-center">
+        <span className="absolute inset-0 animate-spin rounded-full border-2 border-primary/15 border-t-primary" aria-hidden />
+        <span className="animate-breathe flex size-11 items-center justify-center rounded-full bg-primary/10 text-primary">
+          <Layers className="size-5" strokeWidth={1.75} />
+        </span>
       </div>
-      <h2 className="mt-6 text-lg font-semibold">
-        {phase === "validating" ? "Reading your photo…" : downloading ? "Loading the AI model" : "Cutting out the subject…"}
-      </h2>
-      <div className="mt-6 w-full max-w-sm">
-        {downloading ? (
-          <>
-            <p className="font-mono text-4xl font-bold tabular-nums text-primary">{pct}<span className="text-xl">%</span></p>
-            <Progress value={pct} className="mt-4 h-2" />
-            <p className="mt-4 text-xs leading-relaxed text-muted-foreground">First use downloads about 76 MB of model and runtime files. Browsers normally cache them; your image stays on this device.</p>
-          </>
-        ) : (
-          <ol className="mx-auto max-w-xs space-y-2.5 text-left">
-            {COMPUTE_STEPS.map((label, index) => {
-              const done = index < stepIndex;
-              const current = index === stepIndex;
-              return (
-                <li key={label} className={`flex items-center gap-3 rounded-lg px-3.5 py-2 text-sm ${current ? "bg-primary/10 font-medium text-primary" : done ? "text-muted-foreground" : "text-muted-foreground/50"}`}>
-                  <span className={`flex size-5 shrink-0 items-center justify-center rounded-full border text-[10px] ${done ? "border-accent bg-accent text-accent-foreground" : current ? "border-primary" : "border-input"}`}>
-                    {done ? <Check className="size-3" strokeWidth={3} /> : index + 1}
-                  </span>
-                  {label}
-                </li>
-              );
-            })}
-          </ol>
-        )}
-      </div>
+      <h2 className="mt-6 text-lg font-semibold">{heading}</h2>
+      <ol className="mx-auto mt-6 w-full max-w-xs space-y-2.5 text-left">
+        {PROCESS_STEPS.map((label, index) => {
+          const done = index < step;
+          const current = index === step;
+          return (
+            <li key={label} className={`rounded-lg px-3.5 py-2 text-sm transition-colors duration-300 ${current ? "bg-primary/10 font-medium text-primary" : done ? "text-muted-foreground" : "text-muted-foreground/50"}`}>
+              <div className="flex items-center gap-3">
+                <span className={`flex size-5 shrink-0 items-center justify-center rounded-full border text-[10px] ${done ? "border-accent bg-accent text-accent-foreground" : current ? "border-primary" : "border-input"}`}>
+                  {done ? <Check className="size-3" strokeWidth={3} /> : current ? <Loader2 className="size-3 animate-spin" /> : index + 1}
+                </span>
+                <span className="min-w-0 flex-1">{index === 0 && done ? "AI model ready" : label}</span>
+                {index === 0 && current && pct !== null && (
+                  <span className="font-mono text-xs tabular-nums">{pct}%</span>
+                )}
+              </div>
+              {index === 0 && current && pct !== null && (
+                <Progress value={pct} className="mt-2 h-1.5" />
+              )}
+            </li>
+          );
+        })}
+      </ol>
+      {step === 0 && (
+        <p className="mt-4 max-w-sm text-xs leading-relaxed text-muted-foreground">First use downloads about 60 MB of model and runtime files. Browsers cache them, so next time starts instantly; your image stays on this device.</p>
+      )}
       <Button variant="outline" size="sm" className="mt-7" onClick={onCancel}><X className="size-4" /> Cancel</Button>
     </div>
   );
@@ -1217,11 +1215,11 @@ function BatchPanel({ items, busy, paused, doneCount, exportingId, onAdd, onCanc
       <div className="mt-5 space-y-2" aria-busy={busy}>
         {items.map((item) => {
           const active = item.status === "validating" || item.status === "processing";
-          const progressLabel = item.progress?.stage === "download"
-            ? `${Math.floor(item.progress.pct * 100)}% model download`
-            : item.progress?.stage === "compute"
-              ? COMPUTE_STEPS[item.progress.stepIndex]
-              : item.status;
+          const progressLabel = item.progress
+            ? item.progress.pct !== undefined && item.progress.step === 0
+              ? `${PROCESS_STEPS[0]} · ${Math.floor(item.progress.pct * 100)}%`
+              : PROCESS_STEPS[item.progress.step]
+            : item.status;
           return (
             <div key={item.id} className="grid grid-cols-[3rem_minmax(0,1fr)_auto] items-center gap-3 rounded-lg border border-border p-2.5">
               <div className={`relative size-12 overflow-hidden rounded-md border border-border ${item.outputUrl ? "checkerboard-fine" : ""}`}>

@@ -14,15 +14,8 @@ export type ErrorCode =
   | "INFERENCE"
   | "MEMORY";
 
-/** 处理进度:下载阶段为真实百分比,推理阶段为 4 步里程碑 */
-export type ProgressInfo =
-  | { stage: "download"; pct: number }
-  | { stage: "compute"; stepIndex: number };
-
-/** 各阶段耗时拆分(毫秒),用于定位瓶颈 */
-export type StageTimings = {
-  downloadMs: number; // 模型/运行时下载(首载;缓存后≈0)
-  decodeMs: number; // 图片解码 + ORT 会话创建
-  inferenceMs: number; // AI 推理(与图片分辨率无关,约恒定)
-  outputMs: number; // 遮罩放大合成 + PNG 编码(随分辨率线性增长)
-};
+/**
+ * 处理进度:step 为 PROCESS_STEPS 下标(0 = 加载模型)。
+ * pct 仅在 step 0 下载模型时出现,0..1 单调递增。
+ */
+export type ProgressInfo = { step: number; pct?: number };
