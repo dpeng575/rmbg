@@ -176,6 +176,15 @@ export default function AddBackground() {
               subject sitting on a background you chose. Only the starting
               point differs.
             </p>
+            <p className="mt-4 leading-relaxed text-muted-foreground">
+              Need to start from a regular photo instead? Try our{" "}
+              <Link
+                href="/"
+                className="font-medium text-foreground underline underline-offset-4 hover:text-primary"
+              >
+                photo background changer
+              </Link>.
+            </p>
           </div>
         </section>
 

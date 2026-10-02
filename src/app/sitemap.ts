@@ -20,6 +20,11 @@ export default function sitemap(): MetadataRoute.Sitemap {
       priority: 0.9,
     },
     {
+      url: `${SITE_URL}/guide/how-to-change-background`,
+      changeFrequency: "monthly",
+      priority: 0.8,
+    },
+    {
       url: `${SITE_URL}/alternatives/remove-bg-alternative`,
       changeFrequency: "monthly",
       priority: 0.8,
