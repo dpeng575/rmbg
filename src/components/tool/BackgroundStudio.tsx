@@ -16,7 +16,6 @@ import {
   FileImage,
   ImageDown,
   Layers,
-  Loader2,
   Plus,
   RotateCcw,
   Trash2,
@@ -1066,6 +1065,19 @@ function UploadPanel({ error, dragging, onChoose, onDragEnter, onDragLeave, onDr
   );
 }
 
+/**
+ * HTML 元素圆环 spinner。transform 动画在合成器线程执行,WASM 推理阻塞
+ * 主线程时仍然旋转;SVG 图标(Loader2)的 animate-spin 不被合成,会冻结。
+ */
+function Spinner({ className = "size-4" }: { className?: string }) {
+  return (
+    <span
+      aria-hidden
+      className={`inline-block animate-spin rounded-full border-2 border-current border-t-transparent will-change-transform ${className}`}
+    />
+  );
+}
+
 function ProcessingPanel({ phase, progress, onCancel }: {
   phase: "validating" | "processing";
   progress: ProgressInfo | null;
@@ -1095,7 +1107,7 @@ function ProcessingPanel({ phase, progress, onCancel }: {
             <li key={label} className={`rounded-lg px-3.5 py-2 text-sm transition-colors duration-300 ${current ? "bg-primary/10 font-medium text-primary" : done ? "text-muted-foreground" : "text-muted-foreground/50"}`}>
               <div className="flex items-center gap-3">
                 <span className={`flex size-5 shrink-0 items-center justify-center rounded-full border text-[10px] ${done ? "border-accent bg-accent text-accent-foreground" : current ? "border-primary" : "border-input"}`}>
-                  {done ? <Check className="size-3" strokeWidth={3} /> : current ? <Loader2 className="size-3 animate-spin" /> : index + 1}
+                  {done ? <Check className="size-3" strokeWidth={3} /> : current ? <Spinner className="size-3" /> : index + 1}
                 </span>
                 <span className="min-w-0 flex-1">{index === 0 && done ? "AI model ready" : label}</span>
                 {index === 0 && current && pct !== null && (
@@ -1155,7 +1167,7 @@ function ReadyPanel({ state, transparentView, onCompare, onReset, onDownload, on
             // eslint-disable-next-line @next/next/no-img-element
             <img src={state.previewUrl} alt="Photo with new background" className="mx-auto block max-h-[62vh] w-auto max-w-full object-contain" />
           ) : (
-            <div className="flex h-64 w-64 items-center justify-center"><Loader2 className="size-6 animate-spin text-muted-foreground" /></div>
+            <div className="flex h-64 w-64 items-center justify-center"><Spinner className="size-6 text-muted-foreground" /></div>
           )}
           {state.compositing && state.previewUrl && <div className="absolute inset-0 animate-pulse bg-background/30" />}
           {transparentView && state.compare === "result" && (
@@ -1168,7 +1180,7 @@ function ReadyPanel({ state, transparentView, onCompare, onReset, onDownload, on
       <div className="mt-5 flex flex-col items-center gap-3">
         <div className="flex flex-wrap items-center justify-center gap-3">
           <Button size="lg" disabled={state.exporting} onClick={onDownload} className="bg-accent px-8 text-accent-foreground hover:bg-accent/90">
-            {state.exporting ? <Loader2 className="size-4.5 animate-spin" /> : state.downloaded ? <Check className="size-4.5" /> : <Download className="size-4.5" />}
+            {state.exporting ? <Spinner className="size-4.5" /> : state.downloaded ? <Check className="size-4.5" /> : <Download className="size-4.5" />}
             {state.exporting ? "Exporting…" : state.downloaded ? "Downloaded" : "Download HD"}
           </Button>
           <Button variant="outline" onClick={onTransparentDownload}><ImageDown className="size-4" /> Transparent PNG</Button>
@@ -1225,7 +1237,7 @@ function BatchPanel({ items, busy, paused, doneCount, exportingId, onAdd, onCanc
               <div className={`relative size-12 overflow-hidden rounded-md border border-border ${item.outputUrl ? "checkerboard-fine" : ""}`}>
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img src={item.outputUrl ?? item.sourceUrl} alt="" className="size-full object-cover" />
-                {active && <span className="absolute inset-0 flex items-center justify-center bg-background/70"><Loader2 className="size-4 animate-spin" /></span>}
+                {active && <span className="absolute inset-0 flex items-center justify-center bg-background/70"><Spinner className="size-4" /></span>}
               </div>
               <div className="min-w-0">
                 <p className="truncate text-sm font-medium">{item.name}</p>
@@ -1238,7 +1250,7 @@ function BatchPanel({ items, busy, paused, doneCount, exportingId, onAdd, onCanc
               <div className="flex items-center gap-1">
                 {item.status === "done" && (
                   <Button variant="outline" size="icon" title={`Download ${item.name}`} aria-label={`Download ${item.name}`} disabled={busy || exportingId !== null} onClick={() => onDownload(item)}>
-                    {exportingId === item.id ? <Loader2 className="size-4 animate-spin" /> : <Download className="size-4" />}
+                    {exportingId === item.id ? <Spinner className="size-4" /> : <Download className="size-4" />}
                   </Button>
                 )}
                 {item.status === "error" && (
