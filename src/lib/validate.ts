@@ -8,6 +8,8 @@ export const PROCESS_MAX_PIXELS = 16_000_000;
 
 const ACCEPTED_TYPES = new Set([
   "image/jpeg",
+  // 部分系统（如 Windows 资源管理器）会报告非标准的 image/jpg
+  "image/jpg",
   "image/png",
   "image/webp",
 ]);
@@ -32,16 +34,42 @@ export class ImageValidationError extends Error {
   }
 }
 
-/** 统一入口校验:所有输入通道(文件/拖放/粘贴/URL/示例)都走这里 */
-export function validateImage(blob: Blob): ValidateResult {
-  if (!ACCEPTED_TYPES.has(blob.type)) return { ok: false, code: "FORMAT" };
+/** 按文件头魔数判断是否为受支持的格式（JPEG/PNG/WebP）。 */
+async function hasAcceptedMagicBytes(blob: Blob): Promise<boolean> {
+  const bytes = new Uint8Array(await blob.slice(0, 12).arrayBuffer());
+  // JPEG: FF D8 FF
+  const isJpeg = bytes[0] === 0xff && bytes[1] === 0xd8 && bytes[2] === 0xff;
+  // PNG: 89 50 4E 47
+  const isPng =
+    bytes[0] === 0x89 && bytes[1] === 0x50 && bytes[2] === 0x4e && bytes[3] === 0x47;
+  // WebP: "RIFF"...."WEBP"
+  const isWebp =
+    bytes[0] === 0x52 &&
+    bytes[1] === 0x49 &&
+    bytes[2] === 0x46 &&
+    bytes[3] === 0x46 &&
+    bytes[8] === 0x57 &&
+    bytes[9] === 0x45 &&
+    bytes[10] === 0x42 &&
+    bytes[11] === 0x50;
+  return isJpeg || isPng || isWebp;
+}
+
+/**
+ * 统一入口校验:所有输入通道(文件/拖放/粘贴/URL/示例)都走这里。
+ * MIME 类型缺失或不标准时（常见于拖放、部分系统的 .jpg/.jpeg），退回魔数嗅探。
+ */
+export async function validateImage(blob: Blob): Promise<ValidateResult> {
+  if (!ACCEPTED_TYPES.has(blob.type) && !(await hasAcceptedMagicBytes(blob))) {
+    return { ok: false, code: "FORMAT" };
+  }
   if (blob.size > MAX_FILE_BYTES) return { ok: false, code: "SIZE" };
   return { ok: true };
 }
 
 /** 解码、像素检查，并把超出处理预算的手机大图等比缩小。 */
 export async function prepareImage(blob: Blob): Promise<PreparedImage> {
-  const verdict = validateImage(blob);
+  const verdict = await validateImage(blob);
   if (!verdict.ok) throw new ImageValidationError(verdict.code);
 
   let bitmap: ImageBitmap;
