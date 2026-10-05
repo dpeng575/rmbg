@@ -200,52 +200,63 @@ export default function Home() {
             aria-hidden
             className="pointer-events-none absolute inset-x-0 top-0 h-[520px] bg-[radial-gradient(ellipse_60%_55%_at_50%_-10%,hsl(221_83%_53%/0.10),transparent)]"
           />
-          <div className="mx-auto max-w-3xl px-4 pt-14 text-center sm:px-6 sm:pt-18">
-            <h1 className="animate-rise text-balance text-4xl font-extrabold tracking-tight sm:text-5xl">
-              Photo Background Changer
-            </h1>
-            <p
-              className="animate-rise mx-auto mt-5 max-w-2xl text-pretty text-base leading-relaxed text-muted-foreground sm:text-lg"
-              style={{ animationDelay: "80ms" }}
-            >
-              Free, automatic, no watermark. Upload a photo, swap its background for a color, an image or a transparent PNG, and download in seconds.
-            </p>
+          {/* sm–lg 单列居中;lg 起「标题 + 上传框左 / 对比图右」两列。
+              两张 288px 对比图 + 箭头约 650px,在 lg 以下放不进半栏 */}
+          <div className="mx-auto grid max-w-6xl items-center gap-10 px-4 pt-14 text-center sm:px-6 sm:pt-18 lg:grid-cols-[minmax(0,1fr)_auto] lg:gap-12 lg:text-left">
+            <div className="min-w-0">
+              <h1 className="animate-rise text-balance text-4xl font-extrabold tracking-tight sm:text-5xl">
+                Photo Background Changer
+              </h1>
+              <p
+                className="animate-rise mx-auto mt-5 max-w-2xl text-pretty text-base leading-relaxed text-muted-foreground sm:text-lg lg:mx-0"
+                style={{ animationDelay: "80ms" }}
+              >
+                Free, automatic, no watermark. Upload a photo, swap its background for a color, an image or a transparent PNG, and download in seconds.
+              </p>
 
-            <div className="animate-rise mt-7 flex flex-col items-center gap-2 sm:flex-row sm:justify-center" style={{ animationDelay: "140ms" }}>
-              <HashLink href="/#tool" className="inline-flex items-center gap-2 rounded-[8px] bg-accent px-5 py-3 text-sm font-semibold text-accent-foreground shadow-sm"><Upload className="size-4" aria-hidden />Try it free</HashLink>
-              <span className="text-xs text-muted-foreground">JPG / PNG / WebP</span>
+              {/* 上传入口:整块点击跳到工具区 */}
+              <HashLink
+                href="/#tool"
+                className="animate-rise group mx-auto mt-7 flex max-w-md flex-col items-center gap-2 rounded-xl border-2 border-dashed border-primary/25 bg-card/70 px-6 py-5 transition-colors hover:border-primary/50 sm:flex-row sm:justify-center sm:gap-4 lg:mx-0 lg:justify-start"
+                style={{ animationDelay: "140ms" }}
+              >
+                <span className="inline-flex items-center gap-2 rounded-[8px] bg-accent px-5 py-3 text-sm font-semibold text-accent-foreground shadow-sm transition-transform group-hover:-translate-y-0.5"><Upload className="size-4" aria-hidden />Try it free</span>
+                <span className="text-xs text-muted-foreground">JPG / PNG / WebP</span>
+              </HashLink>
+              <p className="mt-4 text-xs text-muted-foreground">Processed on your device — your photo is never uploaded</p>
+              <p className="text-[10px] text-muted-foreground/80">First use downloads about 76 MB</p>
+
+              {/* 特性 pill:把原来一行裸文本的信任点做成可扫读的徽章 */}
+              <ul
+                className="animate-rise mt-6 flex flex-wrap items-center justify-center gap-2 sm:gap-2.5 lg:justify-start"
+                style={{ animationDelay: "160ms" }}
+              >
+                {HERO_FEATURES.map(({ icon: Icon, label }) => (
+                  <li
+                    key={label}
+                    className="inline-flex items-center gap-1.5 rounded-full border border-border bg-card px-3.5 py-1.5 text-sm font-medium shadow-sm"
+                  >
+                    <Icon className="size-3.5 text-emerald-600" aria-hidden />
+                    {label}
+                  </li>
+                ))}
+              </ul>
             </div>
-            <p className="mt-4 text-xs text-muted-foreground">Processed on your device — your photo is never uploaded</p>
-            <p className="text-[10px] text-muted-foreground/80">First use downloads about 76 MB</p>
 
-            {/* 特性 pill:把原来一行裸文本的信任点做成可扫读的徽章 */}
-            <ul
-              className="animate-rise mt-6 flex flex-wrap items-center justify-center gap-2 sm:gap-2.5"
-              style={{ animationDelay: "160ms" }}
-            >
-              {HERO_FEATURES.map(({ icon: Icon, label }) => (
-                <li
-                  key={label}
-                  className="inline-flex items-center gap-1.5 rounded-full border border-border bg-card px-3.5 py-1.5 text-sm font-medium shadow-sm"
-                >
-                  <Icon className="size-3.5 text-emerald-600" aria-hidden />
-                  {label}
-                </li>
-              ))}
-            </ul>
-
-            {/* Before / After 迷你视觉:参考 bgclear,首屏直接给出效果预期。
-                素材 720×750,按原始比例完整显示,不裁切 */}
+            {/* Before / After:素材 720×750,按原始比例完整显示,不裁切。
+                窄屏下两图 flex-1 等比收缩,避免横向溢出 */}
             <div
-              className="animate-rise mt-10 flex items-center justify-center gap-3 sm:gap-5"
+              className="animate-rise flex items-center justify-center gap-3 sm:gap-5"
               style={{ animationDelay: "240ms" }}
             >
-              <figure className="relative aspect-[24/25] w-48 overflow-hidden rounded-xl border border-border bg-secondary shadow-sm sm:w-72">
+              <figure
+                className="relative aspect-[24/25] min-w-0 max-w-48 flex-1 overflow-hidden rounded-xl border border-border shadow-sm sm:max-w-72 lg:w-56 lg:max-w-none lg:flex-none xl:w-72 bg-secondary"
+              >
                 <Image
                   src="/samples/car6-before.jpg"
                   alt="Original car photo"
                   fill
-                  sizes="(min-width: 640px) 288px, 192px"
+                  sizes="(min-width: 1280px) 288px, (min-width: 1024px) 224px, (min-width: 640px) 288px, 192px"
                   className="object-cover"
                 />
                 <figcaption className="absolute bottom-2 left-2 rounded-full bg-foreground/70 px-2 py-0.5 text-[10px] font-semibold text-background backdrop-blur-sm">
@@ -259,14 +270,13 @@ export default function Home() {
                 <MoveRight className="size-4 sm:size-5" />
               </span>
               <figure
-                className="relative aspect-[24/25] w-48 overflow-hidden rounded-xl border border-border shadow-sm sm:w-72"
-                style={CHECKER_STYLE}
+                className="relative aspect-[24/25] min-w-0 max-w-48 flex-1 overflow-hidden rounded-xl border border-border shadow-sm sm:max-w-72 lg:w-56 lg:max-w-none lg:flex-none xl:w-72" style={CHECKER_STYLE}
               >
                 <Image
                   src="/samples/car6-after.webp"
                   alt="Car with its background removed"
                   fill
-                  sizes="(min-width: 640px) 288px, 192px"
+                  sizes="(min-width: 1280px) 288px, (min-width: 1024px) 224px, (min-width: 640px) 288px, 192px"
                   className="object-cover"
                 />
                 <figcaption className="absolute bottom-2 left-2 rounded-full bg-background/85 px-2 py-0.5 text-[10px] font-semibold text-foreground backdrop-blur-sm">
