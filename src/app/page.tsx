@@ -78,27 +78,12 @@ const HOW_STEPS = [
 ];
 
 const USE_CASES = [
-  {
-    image: "/samples/portrait.jpg",
-    alt: "Portrait photo suitable for a clean profile image",
-    title: "Profile photos",
-    description:
-      "Swapping a busy room for a plain wall or a soft gradient instantly makes a profile photo look deliberate. Try a light neutral for LinkedIn, or a warm tone for social profiles.",
-  },
-  {
-    image: "/samples/pet-studio.jpg",
-    alt: "Pet photo suitable for a sticker or keepsake",
-    title: "Pets and keepsakes",
-    description:
-      "Cut a pet out of a cluttered living room and place it against grass, a woven blanket, or a clean white backdrop. The same trick works for keepsakes you want to list or share — isolate the object and give it a background that makes it the subject.",
-  },
-  {
-    image: "/samples/product.jpg",
-    alt: "Everyday object isolated for a creative project",
-    title: "Creative projects",
-    description:
-      "Use the transparent export to drop a cutout into a poster, a slide deck, or a shop banner. Place it over any color you like without hitting the white box that comes with a normal photo.",
-  },
+  { image: "/samples/product.jpg", alt: "Product photo", title: "Product photos", description: "Clean product imagery for listings and catalogs.", href: "/change-background/", anchor: "change a product background" },
+  { image: "/samples/portrait.jpg", alt: "Portrait photo", title: "Profile photos", description: "Make a polished headshot for work or social profiles.", href: "/change-background/", anchor: "change a portrait background" },
+  { image: "/samples/pet-studio.jpg", alt: "Social sticker photo", title: "Social stickers", description: "Turn a favorite subject into a shareable sticker.", href: "/add-background/", anchor: "add a background" },
+  { image: "/samples/product-white.webp", alt: "White background product photo", title: "E-commerce white background", description: "Create marketplace-ready white background images.", href: "/change-background-to-white/", anchor: "make a background white" },
+  { image: "/samples/portrait-cutout.webp", alt: "ID portrait cutout", title: "ID photos", description: "Prepare a clean portrait for forms and applications.", href: "/change-background-to-white/", anchor: "change a background to white" },
+  { image: "/samples/car6-step3.jpg", alt: "Illustration-style subject", title: "Anime and illustrations", description: "Give illustrated subjects a new scene or transparent export.", href: "/add-background/", anchor: "add an illustration background" },
 ];
 
 const PHOTO_TIPS = [
@@ -223,10 +208,15 @@ export default function Home() {
               className="animate-rise mx-auto mt-5 max-w-2xl text-pretty text-base leading-relaxed text-muted-foreground sm:text-lg"
               style={{ animationDelay: "80ms" }}
             >
-              A free photo background replacer: upload a photo, swap its
-              background for a color, an image or a transparent PNG, and
-              download in seconds.
+              Free, automatic, no watermark. Upload a photo, swap its background for a color, an image or a transparent PNG, and download in seconds.
             </p>
+
+            <div className="animate-rise mt-7 flex flex-col items-center gap-2 sm:flex-row sm:justify-center" style={{ animationDelay: "140ms" }}>
+              <HashLink href="/#tool" className="inline-flex items-center gap-2 rounded-[8px] bg-accent px-5 py-3 text-sm font-semibold text-accent-foreground shadow-sm"><Upload className="size-4" aria-hidden />Try it free</HashLink>
+              <span className="text-xs text-muted-foreground">JPG / PNG / WebP</span>
+            </div>
+            <p className="mt-4 text-xs text-muted-foreground">Processed on your device — your photo is never uploaded</p>
+            <p className="text-[10px] text-muted-foreground/80">First use downloads about 76 MB</p>
 
             {/* 特性 pill:把原来一行裸文本的信任点做成可扫读的徽章 */}
             <ul
@@ -373,7 +363,7 @@ export default function Home() {
                 non-commercial use.
               </p>
             </div>
-            <div className="mt-10 grid gap-8 md:grid-cols-3">
+            <div className="mt-10 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
               {USE_CASES.map((useCase) => (
                 <article key={useCase.title}>
                   <div className="relative aspect-[4/3] overflow-hidden rounded-[8px] bg-secondary">
