@@ -1,51 +1,77 @@
 # SwitchBG
 
-Photo Background Changer — 上传照片，AI 在浏览器内抠图并替换背景，免费输出全分辨率图片。SwitchBG 不会上传用户选择的图片文件；网页和首次模型资源加载仍需联网。
+Photo Background Changer — a privacy-first, browser-based AI tool for removing and replacing photo backgrounds. Images stay in your browser; no account or watermark is required. Try it at https://switchbg.com.
 
-## 架构
+## Features
 
-- **Next.js App Router + Tailwind + shadcn/ui**(组件在 `src/components/ui/`,经 registry 手动接入)
-- **SEO 服务端渲染**:TDK / H1 / 正文 4 个 H2 / 7 条 FAQ 全部静态 HTML,附 `SoftwareApplication` + `FAQPage` JSON-LD;只有工具区(`BackgroundStudio`)是 `'use client'` 岛
-- **状态机**:① idle(仅上传)→ processing → ready(② 未选背景:棋盘格抠图 + 引导;③ 编辑态:背景图库/上传背景 + 实时合成 + 原图/结果切换 + Download HD)
-- **抠图**:`@imgly/background-removal`,模型默认从 imgly 官方 CDN 加载(部署包不含模型);设置 `NEXT_PUBLIC_MODEL_BASE_URL=/models/` 可切换自托管回退(COOP/COEP 跨域隔离 → WASM 多线程)
-- **合成**:[composite.ts](src/lib/composite.ts) canvas 引擎 —— 预览降采样(≤1400px 即时切换),下载时全分辨率导出(HD JPEG q95;透明走 PNG)
-- **背景图库**:纯色/渐变 CSS 即时渲染 + 18 张 2400w 照片([prepare-backgrounds.mjs](scripts/prepare-backgrounds.mjs) 下载,已入仓)
+- Runs background removal locally in the browser with `@imgly/background-removal`.
+- Replaces backgrounds with solid colors, gradients, or curated photos.
+- Exports full-resolution JPEGs and transparent PNGs.
+- Responsive Next.js App Router UI for desktop and mobile.
+- Static SEO pages with structured data, FAQ content, and a generated sitemap.
+
+## Development
+
+```bash
+npm install
+npm run dev                 # http://localhost:3000
+npm run build && npm run start
+```
+
+Models load from the official IMG.LY CDN by default. For a self-hosted fallback, run `npm run prepare:models`, set `NEXT_PUBLIC_MODEL_BASE_URL=/models/`, and deploy the generated files from `public/models/` (they are not committed). Background assets can be refreshed with `node scripts/prepare-backgrounds.mjs`.
+
+## Validation
+
+```bash
+node scripts/e2e.mjs
+node scripts/e2e-mobile.mjs
+node scripts/screenshot.mjs
+```
+
+## Analytics and privacy
+
+Set `NEXT_PUBLIC_GA_MEASUREMENT_ID` only when GA4 is needed. Analytics loads after consent and records predefined feature events only; it never includes image data, filenames, blob URLs, or raw errors. User-selected images are processed locally in the browser.
+
+## License and usage
+
+This project uses `@imgly/background-removal@1.7.0` (AGPL-3.0) and the `isnet_quint8` model. The project is intended for personal, non-commercial use until the operator confirms all distribution and licensing obligations. See the repository notices and upstream licenses before deploying publicly.
+
+---
+
+# SwitchBG（中文）
+
+Photo Background Changer 是一个注重隐私、在浏览器内运行的 AI 图片去背景与换背景工具。图片会留在用户浏览器中处理，无需注册，也不会添加水印。在线体验：https://switchbg.com。
+
+## 功能
+
+- 使用 `@imgly/background-removal` 在浏览器本地完成抠图。
+- 支持纯色、渐变和图库图片背景。
+- 支持导出全分辨率 JPEG 与透明 PNG。
+- 基于 Next.js App Router，适配桌面端和移动端。
+- 提供静态 SEO 页面、结构化数据、FAQ 内容和自动生成的 sitemap。
 
 ## 开发
 
 ```bash
-npm install        # 默认走官方 CDN,不下载模型
-npm run dev        # http://localhost:3000
+npm install
+npm run dev                 # http://localhost:3000
 npm run build && npm run start
 ```
 
-模型资源:默认从 imgly 官方 CDN 加载,零配置。自托管回退(imgly CDN 不可用或想省第三方依赖时):`npm run prepare:models` 下载约 76MB 到 `public/models/`(不入仓),部署时设置 `NEXT_PUBLIC_MODEL_BASE_URL=/models/`;postinstall 只在该环境变量已设置时才自动下载。背景图源更新:`node scripts/prepare-backgrounds.mjs`。
+默认从 IMG.LY 官方 CDN 加载模型。需要自托管时运行 `npm run prepare:models`，设置 `NEXT_PUBLIC_MODEL_BASE_URL=/models/`，并部署生成到 `public/models/` 的文件（模型文件不会提交到仓库）。更新背景素材可运行 `node scripts/prepare-backgrounds.mjs`。
 
-## GA4 埋点
+## 验证
 
-在部署平台配置 `NEXT_PUBLIC_GA_MEASUREMENT_ID=G-XXXXXXXXXX` 后，站点才会显示分析授权横幅并启用 GA4。用户同意前不会加载 Google 脚本；拒绝后不会发送分析事件。事件只包含预定义的功能类别和结果，不包含图片、文件名、Blob URL 或原始错误信息。
+```bash
+node scripts/e2e.mjs
+node scripts/e2e-mobile.mjs
+node scripts/screenshot.mjs
+```
 
-GA4 后台还需要完成以下设置：
+## 分析与隐私
 
-- 将 `download_completed` 标记为关键事件。
-- 用 `upload_started → processing_completed → background_selected → download_completed` 建立核心漏斗。
-- 为需要出现在报告中的自定义参数创建事件级自定义维度。
-- 将事件数据保留期限设为可用的最短期限，并保持 Google Signals、广告个性化和 Google Ads 关联关闭。
-
-本地不配置该环境变量时，分析代码和授权界面均保持关闭。
+只有在需要 GA4 时才配置 `NEXT_PUBLIC_GA_MEASUREMENT_ID`。用户同意后才加载分析脚本，事件仅包含预定义的功能类别，不包含图片、文件名、Blob URL 或原始错误信息。用户选择的图片在浏览器本地处理。
 
 ## 许可与使用范围
 
-- 当前实现使用 `@imgly/background-removal@1.7.0`（AGPL-3.0）及其 `isnet_quint8` 模型；不是 BRIA RMBG-1.4。
-- 依赖附带的第三方声明将 ISNET 模型标注为 MIT License，来源为 `https://github.com/xuebinqin/DIS`。
-- 在项目运营方确认全部分发和合规义务前，SwitchBG 仅供个人、非商业用途。生产公开部署前应公开对应源代码以履行 AGPL，或向 IMG.LY 获取适用的商业许可。
-
-## 验证脚本
-
-```bash
-node scripts/e2e.mjs          # 端到端:上传→抠图→选背景→下载 HD/透明 PNG→重置;断言跨域隔离
-node scripts/e2e-mobile.mjs   # 移动端 390px 全流程 + 格式错误路径
-node scripts/screenshot.mjs   # 桌面端全页截图(驱动系统 Chrome)
-```
-
-验证自托管回退时:`NEXT_PUBLIC_MODEL_BASE_URL=/models/` 启动 dev,再以 `SELFHOST=1` 运行 e2e,脚本会断言零外网模型请求。
+项目使用 `@imgly/background-removal@1.7.0`（AGPL-3.0）及 `isnet_quint8` 模型。在项目运营方确认完整的分发和许可义务前，项目仅供个人、非商业用途。公开部署前请阅读仓库声明和上游许可证。
