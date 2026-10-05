@@ -253,8 +253,8 @@ export default function Home() {
                 className="relative aspect-[24/25] min-w-0 max-w-48 flex-1 overflow-hidden rounded-xl border border-border shadow-sm sm:max-w-72 lg:w-56 lg:max-w-none lg:flex-none xl:w-72 bg-secondary"
               >
                 <Image
-                  src="/samples/car6-before.jpg"
-                  alt="Original car photo"
+                  src="/samples/people-before.jpg"
+                  alt="Original couple photo"
                   fill
                   sizes="(min-width: 1280px) 288px, (min-width: 1024px) 224px, (min-width: 640px) 288px, 192px"
                   className="object-cover"
@@ -273,8 +273,8 @@ export default function Home() {
                 className="relative aspect-[24/25] min-w-0 max-w-48 flex-1 overflow-hidden rounded-xl border border-border shadow-sm sm:max-w-72 lg:w-56 lg:max-w-none lg:flex-none xl:w-72" style={CHECKER_STYLE}
               >
                 <Image
-                  src="/samples/car6-after.webp"
-                  alt="Car with its background removed"
+                  src="/samples/people-after.webp"
+                  alt="Couple with the background removed"
                   fill
                   sizes="(min-width: 1280px) 288px, (min-width: 1024px) 224px, (min-width: 640px) 288px, 192px"
                   className="object-cover"
