@@ -1,5 +1,7 @@
 import Image from "next/image";
 import Link from "next/link";
+import { existsSync } from "node:fs";
+import { join } from "node:path";
 import {
   BadgeCheck,
   Check,
@@ -77,14 +79,68 @@ const HOW_STEPS = [
   },
 ];
 
-const USE_CASES = [
-  { image: "/samples/scenes/product.jpg", alt: "Product photo", title: "Product photos", description: "Clean product imagery for listings and catalogs.", href: "/change-background-to-white", anchor: "Product photos" },
-  { image: "/samples/scenes/profile.jpg", alt: "Portrait photo", title: "Profile photos", description: "Make a polished headshot for work or social profiles.", href: "/change-background", anchor: "Profile photos" },
-  { image: "/samples/scenes/social-stickers.jpg", alt: "Social sticker photo", title: "Social stickers", description: "Turn a favorite subject into a shareable sticker.", href: "/change-background", anchor: "Social stickers" },
-  { image: "/samples/scenes/ecommerce-white.jpg", alt: "White background product photo", title: "E-commerce white background", description: "Create marketplace-ready white background images.", href: "/change-background-to-white", anchor: "E-commerce white" },
-  { image: "/samples/scenes/id-photo.jpg", alt: "ID portrait cutout", title: "ID photos", description: "Prepare a clean portrait for forms and applications.", href: "/change-background", anchor: "ID photos" },
-  { image: "/samples/scenes/anime.jpg", alt: "Illustration-style subject", title: "Anime and illustrations", description: "Give illustrated subjects a new scene or transparent export.", href: "/add-background", anchor: "Anime and illustrations" },
+/** 前后对照卡:两张图各占一半;图片缺失时渲染占位色块(素材后补) */
+type UseCase = {
+  title: string;
+  description: string;
+  href: string;
+  before: string;
+  beforeAlt: string;
+  after: string;
+  afterAlt: string;
+};
+
+const USE_CASES: UseCase[] = [
+  {
+    title: "Product photos",
+    description: "Clean product imagery for listings and catalogs.",
+    href: "/change-background-to-white",
+    before: "/samples/scenes/product-before.jpg",
+    beforeAlt: "Headphones on a yellow background before background removal",
+    after: "/samples/scenes/product-after.png",
+    afterAlt: "Same headphones on a white background after background removal",
+  },
+  {
+    title: "Profile photos",
+    description: "Make a polished headshot for work or social profiles.",
+    href: "/change-background",
+    before: "/samples/scenes/profile-before.webp",
+    beforeAlt: "Portrait photo against a distracting background before background removal",
+    after: "/samples/scenes/profile-after.webp",
+    afterAlt: "Same portrait on a clean backdrop after background removal",
+  },
+  {
+    title: "Anime and illustrations",
+    description: "Give illustrated subjects a new scene or transparent export.",
+    href: "/add-background",
+    before: "/samples/scenes/anime-before.jpg",
+    beforeAlt: "Anime-style illustration before background removal",
+    after: "/samples/scenes/anime-after.webp",
+    afterAlt: "Same illustration on a new background after background removal",
+  },
 ];
+
+/** 服务端构建期检查 public 下素材是否存在,缺失时渲染占位色块(图片后补无需改码) */
+function hasPublicAsset(src: string): boolean {
+  return existsSync(join(process.cwd(), "public", src));
+}
+
+/** use case 卡片内的一格图像;素材未就绪时输出占位色块 */
+function UseCaseFigure({ src, alt }: { src: string; alt: string }) {
+  if (!hasPublicAsset(src)) {
+    return <div className="h-full w-full bg-secondary" aria-hidden />;
+  }
+  return (
+    <Image
+      src={src}
+      alt={alt}
+      width={400}
+      height={300}
+      sizes="(min-width: 768px) 33vw, (min-width: 640px) 50vw, 100vw"
+      className="h-full w-full object-cover"
+    />
+  );
+}
 
 const PHOTO_TIPS = [
   {
@@ -174,10 +230,13 @@ const softwareAppJsonLd = {
 const faqJsonLd = {
   "@context": "https://schema.org",
   "@type": "FAQPage",
-  mainEntity: FAQS.map(({ q, a }) => ({
+  mainEntity: FAQS.map(({ q, a, link }) => ({
     "@type": "Question",
     name: q,
-    acceptedAnswer: { "@type": "Answer", text: a },
+    acceptedAnswer: {
+      "@type": "Answer",
+      text: link ? `${a} ${link.label}${link.after ? ` ${link.after}` : ""}` : a,
+    },
   })),
 };
 
@@ -375,21 +434,21 @@ export default function Home() {
               </h2>
               <p className="mt-4 leading-relaxed text-muted-foreground">
                 Start with a clear subject, then choose a background that fits
-                what you want to make. SwitchBG is currently for personal,
-                non-commercial use.
+                what you want to make.
               </p>
             </div>
             <div className="mt-10 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
               {USE_CASES.map((useCase) => (
                 <Link key={useCase.title} href={useCase.href} className="group block overflow-hidden rounded-xl border border-border bg-card p-4 transition-shadow hover:shadow-md">
-                  <div className="relative aspect-[4/3] overflow-hidden rounded-[8px] bg-secondary">
-                    <Image
-                      src={useCase.image}
-                      alt={useCase.alt}
-                      fill
-                      sizes="(min-width: 768px) 33vw, 100vw"
-                      className="object-cover"
-                    />
+                  <div className="grid aspect-[4/3] grid-cols-2 overflow-hidden rounded-[8px] border border-border bg-secondary">
+                    <div className="relative border-r border-border">
+                      <span className="absolute left-3 top-3 z-10 rounded-full bg-background px-2.5 py-1 text-xs font-medium text-foreground shadow-sm">Before</span>
+                      <UseCaseFigure src={useCase.before} alt={useCase.beforeAlt} />
+                    </div>
+                    <div className="relative">
+                      <span className="absolute left-3 top-3 z-10 rounded-full bg-background px-2.5 py-1 text-xs font-medium text-foreground shadow-sm">After</span>
+                      <UseCaseFigure src={useCase.after} alt={useCase.afterAlt} />
+                    </div>
                   </div>
                   <h3 className="mt-5 text-lg font-semibold">{useCase.title}</h3>
                   <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
@@ -545,7 +604,7 @@ export default function Home() {
               FAQ
             </h2>
             <Accordion type="single" collapsible className="mt-6">
-              {FAQS.map(({ q, a }, i) => (
+              {FAQS.map(({ q, a, link }, i) => (
                 <AccordionItem key={q} value={`faq-${i}`}>
                   {/* Radix Accordion.Header 默认渲染 <h3>,问题文本即被 h3 包裹 */}
                   <AccordionTrigger className="text-sm sm:text-base">
@@ -553,6 +612,18 @@ export default function Home() {
                   </AccordionTrigger>
                   <AccordionContent className="text-sm leading-relaxed text-muted-foreground">
                     {a}
+                    {link && (
+                      <>
+                        {" "}
+                        <Link
+                          href={link.href}
+                          className="font-medium text-primary underline underline-offset-4 hover:no-underline"
+                        >
+                          {link.label}
+                        </Link>
+                        {link.after ? ` ${link.after}` : ""}
+                      </>
+                    )}
                   </AccordionContent>
                 </AccordionItem>
               ))}

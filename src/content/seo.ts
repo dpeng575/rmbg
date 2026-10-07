@@ -3,7 +3,12 @@
  * 不改写;FAQ 答案为配套撰写(与页面可见文本一致,供 FAQPage 结构化数据复用)。
  */
 
-export const FAQS: { q: string; a: string }[] = [
+export const FAQS: {
+  q: string;
+  a: string;
+  /** 可选:答案末尾内链(渲染为 <a>,JSON-LD 中拼回纯文本) */
+  link?: { href: string; label: string; after?: string };
+}[] = [
   {
     q: "Is SwitchBG a free photo background changer?",
     a: "Yes. SwitchBG is completely free with no signup, no watermark, and no daily limits. You can change the background of as many photos as you like.",
@@ -51,6 +56,11 @@ export const FAQS: { q: string; a: string }[] = [
   {
     q: "Is SwitchBG a good remove bg alternative for sellers and designers?",
     a: "It is free with no credit limit, no signup, and no watermark, and it exports at up to 4096px on the long edge. If you process a steady volume of product or portrait photos, there is nothing to meter and no subscription to maintain.",
+  },
+  {
+    q: "Can I use SwitchBG results commercially?",
+    a: "SwitchBG is currently for personal, non-commercial use. See the",
+    link: { href: "/model-license", label: "model license", after: "for details." },
   },
 ];
 
