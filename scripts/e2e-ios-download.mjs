@@ -44,14 +44,13 @@ const name1 = await page.evaluate(() => window.__lastSharedName);
 console.log("shared (Transparent PNG):", name1);
 if (!name1.endsWith("-switchbg.png")) throw new Error(`PNG 文件名不符合约定: ${name1}`);
 
-// 路径②:Download HD(未选背景 = 透明路径)→ 同样应走分享,成功后按钮变 Downloaded
-await page.click('button:has-text("Download HD")');
+// 路径②:主下载按钮(未选背景 = 透明路径)→ 同样应走分享。
+// 注:透明 PNG 下载也会把主按钮置为 Downloaded,故此步按 Downloaded 文案定位。
+await page.click('button:has-text("Downloaded")');
 await page.waitForFunction(() => window.__shareCount >= 2, null, { timeout: 15_000 });
 const name2 = await page.evaluate(() => window.__lastSharedName);
-console.log("shared (Download HD):", name2);
-if (!name2.endsWith("-switchbg.png")) throw new Error(`HD 文件名不符合约定: ${name2}`);
-await page.waitForSelector('button:has-text("Downloaded")', { timeout: 5_000 });
-console.log("button shows Downloaded");
+console.log("shared (main download):", name2);
+if (!name2.endsWith("-switchbg.png")) throw new Error(`主下载文件名不符合约定: ${name2}`);
 
 console.log("iOS download OK");
 await browser.close();

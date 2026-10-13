@@ -1029,10 +1029,7 @@ function UploadPanel({ error, dragging, onChoose, onDragEnter, onDragLeave, onDr
         onDrop={onDrop}
         className={`rounded-xl border-2 border-dashed px-6 py-12 text-center transition-all duration-200 ${dragging ? "scale-[1.005] border-primary bg-primary/5" : "border-input hover:border-primary/50"}`}
       >
-        <span className="mx-auto flex size-13 items-center justify-center rounded-xl bg-primary/10 text-primary">
-          <Upload className="size-6" strokeWidth={1.75} />
-        </span>
-        <Button size="lg" className="mt-5 px-8" onClick={onChoose}>
+        <Button size="lg" className="px-8 cursor-pointer" onClick={onChoose}>
           <Upload className="size-4.5" /> Upload photos
         </Button>
         <p className="mt-4 text-sm text-muted-foreground">Choose one photo, or select several for batch processing</p>

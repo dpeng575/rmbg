@@ -3,40 +3,37 @@
 import Image from "next/image";
 import { useCallback, useRef, useState } from "react";
 import { MoveHorizontal } from "lucide-react";
-import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { HashLink } from "@/components/site/HashLink";
 
 const SHOWCASE = [
   {
     id: "people",
-    label: "People",
+    title: "People",
+    detail: "Full-resolution hair and skin-edge fidelity.",
     before: "/samples/people1.jpg",
+    beforeAlt: "Portrait photo before background removal",
     after: "/samples/people1-cutout.webp",
-    alt: "Portrait photo before and after background removal",
-    width: 4480,
-    height: 6720,
+    afterAlt: "Portrait cutout with transparent background",
   },
   {
     id: "products",
-    label: "Products",
+    title: "Products",
+    detail: "Marketplace-clean edges on studio or flat shots.",
     before: "/samples/product-bag.jpg",
+    beforeAlt: "Product photo before background removal",
     after: "/samples/product-bag-cutout.webp",
-    alt: "Product photo before and after background removal",
-    width: 5742,
-    height: 3587,
+    afterAlt: "Product cutout with transparent background",
   },
   {
     id: "pets",
-    label: "Pets",
+    title: "Pets",
+    detail: "Fur and whiskers survive the cut, strand by strand.",
     before: "/samples/pet-dog.jpg",
+    beforeAlt: "Pet photo before background removal",
     after: "/samples/pet-dog-cutout.webp",
-    alt: "Pet photo before and after background removal",
-    width: 3331,
-    height: 4742,
+    afterAlt: "Pet cutout with transparent background",
   },
 ] as const;
-
-const STAGE_MAX_HEIGHT = 460;
 
 const MIN_POS = 0;
 const MAX_POS = 100;
@@ -49,11 +46,10 @@ export const CHECKER_STYLE = {
   backgroundPosition: "0 0, 0 10px, 10px -10px, -10px 0px",
 };
 
-export function QualityShowcase() {
-  const [active, setActive] = useState<string>(SHOWCASE[0].id);
+/** 单张可拖动前后对比卡:before 原图左 / after 抠图右(棋盘底) */
+function CompareCard(props: (typeof SHOWCASE)[number]) {
   const [pos, setPos] = useState(50);
   const stageRef = useRef<HTMLDivElement>(null);
-  const sample = SHOWCASE.find((s) => s.id === active) ?? SHOWCASE[0];
 
   const updateFromClientX = useCallback((clientX: number) => {
     const rect = stageRef.current?.getBoundingClientRect();
@@ -78,8 +74,68 @@ export function QualityShowcase() {
   };
 
   return (
-    <section id="quality" className="scroll-mt-20 py-16 sm:py-20">
-      <div className="mx-auto max-w-4xl px-4 sm:px-6">
+    <div className="overflow-hidden rounded-2xl border border-border bg-card shadow-md transition-transform duration-200 hover:-translate-y-1 hover:shadow-lg">
+      <div
+        ref={stageRef}
+        onPointerDown={onPointerDown}
+        onPointerMove={(e) => {
+          if (e.currentTarget.hasPointerCapture(e.pointerId)) updateFromClientX(e.clientX);
+        }}
+        className="relative aspect-[4/3] cursor-ew-resize touch-none select-none overflow-hidden"
+        style={CHECKER_STYLE}
+      >
+        <Image
+          src={props.after}
+          alt={props.afterAlt}
+          fill
+          sizes="(min-width: 1024px) 33vw, (min-width: 640px) 50vw, 100vw"
+          className="object-cover"
+        />
+        {/* before 原图:滑块左侧 */}
+        <Image
+          src={props.before}
+          alt={props.beforeAlt}
+          fill
+          sizes="(min-width: 1024px) 33vw, (min-width: 640px) 50vw, 100vw"
+          className="object-cover"
+          style={{ clipPath: `inset(0 ${100 - pos}% 0 0)` }}
+        />
+
+        <span className="absolute top-3 left-3 z-10 rounded-full bg-background px-2.5 py-1 text-xs font-medium text-muted-foreground shadow-sm">
+          Before
+        </span>
+        <span className="absolute top-3 right-3 z-10 rounded-full bg-background px-2.5 py-1 text-xs font-medium text-muted-foreground shadow-sm">
+          After
+        </span>
+
+        <div
+          role="slider"
+          aria-label={`Compare original and result for ${props.title}`}
+          aria-valuemin={0}
+          aria-valuemax={100}
+          aria-valuenow={Math.round(pos)}
+          tabIndex={0}
+          onKeyDown={onKeyDown}
+          className="absolute inset-y-0 z-10 w-0.5 cursor-ew-resize bg-background shadow-[0_0_0_1px_hsl(var(--border))] focus-visible:outline-none"
+          style={{ left: `${pos}%` }}
+        >
+          <div className="absolute top-1/2 left-1/2 flex size-10 -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full border border-border bg-background text-foreground shadow-md">
+            <MoveHorizontal className="size-5" aria-hidden />
+          </div>
+        </div>
+      </div>
+      <div className="p-5 text-center">
+        <h3 className="text-lg font-semibold">{props.title}</h3>
+        <p className="mt-1.5 text-sm leading-relaxed text-muted-foreground">{props.detail}</p>
+      </div>
+    </div>
+  );
+}
+
+export function QualityShowcase() {
+  return (
+    <section id="quality" className="scroll-mt-20 rounded-t-[20px] bg-background py-16 shadow-[0_-8px_30px_-18px_hsl(var(--foreground)/0.08)] sm:py-20">
+      <div className="mx-auto max-w-7xl px-4 sm:px-6">
         <div className="text-center">
           <h2 className="text-2xl font-bold tracking-tight sm:text-3xl">
             See the cutout quality for yourself
@@ -97,89 +153,13 @@ export function QualityShowcase() {
           </p>
         </div>
 
-        <Tabs
-          value={active}
-          onValueChange={(v) => {
-            setActive(v);
-            setPos(50);
-          }}
-          className="mt-8 items-center"
-        >
-          <TabsList>
-            {SHOWCASE.map((item) => (
-              <TabsTrigger key={item.id} value={item.id}>
-                {item.label}
-              </TabsTrigger>
-            ))}
-          </TabsList>
-        </Tabs>
-
-        <div
-          ref={stageRef}
-          onPointerDown={onPointerDown}
-          onPointerMove={(e) => {
-            if (e.currentTarget.hasPointerCapture(e.pointerId)) updateFromClientX(e.clientX);
-          }}
-          className="relative mx-auto mt-6 w-full cursor-ew-resize touch-none select-none"
-          style={{
-            aspectRatio: `${sample.width} / ${sample.height}`,
-            maxWidth: `min(100%, ${STAGE_MAX_HEIGHT * (sample.width / sample.height)}px)`,
-            maxHeight: STAGE_MAX_HEIGHT,
-          }}
-        >
-          <div
-            className="absolute inset-0 overflow-hidden rounded-[8px] border border-border"
-            style={CHECKER_STYLE}
-          >
-            {/* 原图:滑块左侧 */}
-            <Image
-              key={`${sample.id}-before`}
-              src={sample.before}
-              alt={`Original photo (${sample.label})`}
-              fill
-              sizes="(min-width: 896px) 896px, 100vw"
-              className="object-contain"
-              style={{ clipPath: `inset(0 ${100 - pos}% 0 0)` }}
-              priority={false}
-            />
-            {/* 抠图结果:滑块右侧,透明处露出棋盘格 */}
-            <Image
-              key={`${sample.id}-after`}
-              src={sample.after}
-              alt={`Background removed (${sample.label})`}
-              fill
-              sizes="(min-width: 896px) 896px, 100vw"
-              className="object-contain"
-              style={{ clipPath: `inset(0 0 0 ${pos}%)` }}
-            />
-
-            <span className="absolute top-3 left-3 rounded-full bg-foreground/70 px-2.5 py-1 text-xs font-medium text-background backdrop-blur-sm">
-              Before
-            </span>
-            <span className="absolute top-3 right-3 rounded-full bg-background/80 px-2.5 py-1 text-xs font-medium text-foreground backdrop-blur-sm">
-              After
-            </span>
-          </div>
-
-          <div
-            role="slider"
-            aria-label="Compare original and result"
-            aria-valuemin={0}
-            aria-valuemax={100}
-            aria-valuenow={Math.round(pos)}
-            tabIndex={0}
-            onKeyDown={onKeyDown}
-            className="absolute inset-y-0 z-10 w-0.5 cursor-ew-resize bg-background shadow-[0_0_0_1px_hsl(var(--border))] focus-visible:outline-none"
-            style={{ left: `${pos}%` }}
-          >
-            <div className="absolute top-1/2 left-1/2 flex size-10 -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full border border-border bg-background text-foreground shadow-md group-focus-visible:ring-2">
-              <MoveHorizontal className="size-5" aria-hidden />
-            </div>
-          </div>
-
+        <div className="mx-auto mt-10 grid max-w-7xl gap-8 px-0 sm:grid-cols-2 lg:grid-cols-3">
+          {SHOWCASE.map((item) => (
+            <CompareCard key={item.id} {...item} />
+          ))}
         </div>
 
-        <p className="mt-4 text-center text-xs text-muted-foreground">
+        <p className="mt-8 text-center text-xs text-muted-foreground">
           Results depend on the source photo — clear subjects with even lighting
           cut out cleanest.
         </p>

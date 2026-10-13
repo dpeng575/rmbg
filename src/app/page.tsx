@@ -5,17 +5,12 @@ import { join } from "node:path";
 import {
   BadgeCheck,
   Check,
-  Contrast,
-  Download,
-  Focus,
   Infinity as InfinityIcon,
   Lock,
   LogIn,
   MoveRight,
-  Palette,
   ShieldCheck,
   Sparkles,
-  Sun,
   Upload,
 } from "lucide-react";
 import {
@@ -33,15 +28,6 @@ import { FAQS, WHY_BULLETS } from "@/content/seo";
 
 const WHY_ICONS = [InfinityIcon, LogIn, BadgeCheck, ShieldCheck];
 
-/** #how 第二步专用:比 CHECKER_STYLE 更明显的方格底,突出"背景已透明" */
-const HOW_CHECKER_STYLE = {
-  backgroundImage:
-    "linear-gradient(45deg, hsl(var(--border)) 25%, transparent 25%), linear-gradient(-45deg, hsl(var(--border)) 25%, transparent 25%), linear-gradient(45deg, transparent 75%, hsl(var(--border)) 75%), linear-gradient(-45deg, transparent 75%, hsl(var(--border)) 75%)",
-  backgroundColor: "#ffffff",
-  backgroundSize: "28px 28px",
-  backgroundPosition: "0 0, 0 14px, 14px -14px, -14px 0px",
-};
-
 /** Hero 特性 pill:文案与原「Free · No signup · ...」逐字对应,只是加视觉容器 */
 const HERO_FEATURES = [
   { icon: Sparkles, label: "Free" },
@@ -49,41 +35,13 @@ const HERO_FEATURES = [
   { icon: Check, label: "No watermark" },
   { icon: ShieldCheck, label: "Your image is processed in your browser" },
 ];
-const HOW_STEPS = [
-  {
-    icon: Upload,
-    label: "Upload a photo",
-    detail:
-      "Drag an image onto the page, paste it from your clipboard, or click to browse your device. JPG, PNG and WebP all work, and you can upload several photos at once. The image is processed on your device, so your photo never has to leave it.",
-    visual: "/samples/car6-before.jpg",
-    alt: "Original car photo",
-    checker: false,
-  },
-  {
-    icon: Palette,
-    label: "Choose the new background",
-    detail:
-      "Choose a solid color, browse the background library, or upload your own. SwitchBG cuts out the subject first, so anything you place behind it sits correctly — no manual masking, no layer juggling. If you want to keep the background empty, export as a transparent PNG instead.",
-    visual: "/samples/car6-after.webp",
-    alt: "Car cut out from its background",
-    checker: true,
-  },
-  {
-    icon: Download,
-    label: "Check and download",
-    detail:
-      "Compare the original and the result side by side, zoom in to inspect the edges, then download at up to 4096px on the long edge. There is no watermark and no queue — switch backgrounds and export as many times as you like.",
-    visual: "/samples/car6-step3.jpg",
-    alt: "Car composited onto a new background, ready to download",
-    checker: false,
-  },
-];
 
 /** 前后对照卡:两张图各占一半;图片缺失时渲染占位色块(素材后补) */
 type UseCase = {
   title: string;
   description: string;
   href: string;
+  linkLabel: string;
   before: string;
   beforeAlt: string;
   after: string;
@@ -95,15 +53,17 @@ const USE_CASES: UseCase[] = [
     title: "Product photos",
     description: "Clean product imagery for listings and catalogs.",
     href: "/change-background-to-white",
+    linkLabel: "Change background to white",
     before: "/samples/scenes/product-before.jpg",
     beforeAlt: "Headphones on a yellow background before background removal",
-    after: "/samples/scenes/product-after.png",
+    after: "/samples/scenes/product-after-headphones.jpg",
     afterAlt: "Same headphones on a white background after background removal",
   },
   {
     title: "Profile photos",
     description: "Make a polished headshot for work or social profiles.",
     href: "/change-background",
+    linkLabel: "Change background",
     before: "/samples/scenes/profile-before.webp",
     beforeAlt: "Portrait photo against a distracting background before background removal",
     after: "/samples/scenes/profile-after.webp",
@@ -113,10 +73,11 @@ const USE_CASES: UseCase[] = [
     title: "Anime and illustrations",
     description: "Give illustrated subjects a new scene or transparent export.",
     href: "/add-background",
+    linkLabel: "Add background",
     before: "/samples/scenes/anime-before.jpg",
     beforeAlt: "Anime-style illustration before background removal",
-    after: "/samples/scenes/anime-after.webp",
-    afterAlt: "Same illustration on a new background after background removal",
+    after: "/samples/scenes/anime-after-scene.jpg",
+    afterAlt: "Same illustration on a soft gradient background after background change",
   },
 ];
 
@@ -141,72 +102,6 @@ function UseCaseFigure({ src, alt }: { src: string; alt: string }) {
     />
   );
 }
-
-const PHOTO_TIPS = [
-  {
-    icon: Contrast,
-    title: "Create clear separation",
-    description:
-      "The cutout engine looks for contrast between subject and background. A person in a light shirt against a dark wall is easy; a beige jumper on a beige sofa is hard. If you can, shoot against a background that differs in tone from your subject.",
-  },
-  {
-    icon: Sun,
-    title: "Use even lighting",
-    description:
-      "Bright, even light keeps the edge between subject and background crisp. Backlit photos and harsh shadows make that edge ambiguous, and the result is a softer outline. Natural daylight from a window, or a phone flash bounced off a wall, is plenty.",
-  },
-  {
-    icon: Focus,
-    title: "Keep the subject in frame",
-    description:
-      "Leave a little space around the subject — a few centimetres of shoulder, the top of the shoulders and the full head. Trimming too tightly means there is no edge for the tool to work with, and you lose room to reframe later.",
-  },
-];
-
-/** 首页内页入口卡片:目标页 3 个在建(/change-background/、/add-background/、
- *  /alternatives/),上线前这三张卡会 404,建一个自动生效一个 */
-const TOOL_CARDS = [
-  {
-    href: "/change-background/",
-    h3: "Change any background",
-    desc: "Swap the background of a photo for a colour, a library image, or a transparent PNG.",
-    anchor: "change the background of a photo",
-    before: "/samples/car6-before.jpg",
-    after: "/samples/car6-after.webp",
-    beforeChecker: false,
-    afterChecker: true,
-  },
-  {
-    href: "/add-background/",
-    h3: "Add a background",
-    desc: "Starting from a cutout or a transparent PNG? Drop in a backdrop and finish the shot.",
-    anchor: "add a background to a photo",
-    before: "/samples/car6-after.webp",
-    after: "/samples/car6-step3.jpg",
-    beforeChecker: true,
-    afterChecker: false,
-  },
-  {
-    href: "/change-background-to-white/",
-    h3: "Change a background to white",
-    desc: "Pure white, ready for marketplace listings, ID photos and catalogue shots.",
-    anchor: "change a background to white",
-    before: "/samples/product.jpg",
-    after: "/samples/product-white.webp",
-    beforeChecker: false,
-    afterChecker: false,
-  },
-  {
-    href: "/alternatives/remove-bg-alternative/",
-    h3: "Coming from remove.bg?",
-    desc: "What to expect now that the site is closing, and how to move your workflow over.",
-    anchor: "remove.bg alternatives",
-    before: "/samples/portrait.jpg",
-    after: "/samples/portrait-cutout.webp",
-    beforeChecker: false,
-    afterChecker: true,
-  },
-];
 
 /** 结构化数据:SoftwareApplication + FAQPage(答案与页面可见文本逐字一致) */
 const softwareAppJsonLd = {
@@ -252,19 +147,24 @@ export default function Home() {
         dangerouslySetInnerHTML={{ __html: JSON.stringify(faqJsonLd) }}
       />
       <SiteHeader />
-      <main className="flex-1">
+      <main className="flex-1 bg-secondary/50">
         {/* —— Hero(服务端渲染) —— */}
         <section className="relative overflow-hidden">
           <div
             aria-hidden
-            className="pointer-events-none absolute inset-x-0 top-0 h-[520px] bg-[radial-gradient(ellipse_60%_55%_at_50%_-10%,hsl(221_83%_53%/0.10),transparent)]"
+            className="pointer-events-none absolute inset-x-0 top-0 h-[520px] bg-[radial-gradient(ellipse_55%_45%_at_18%_0%,hsl(221_83%_53%/0.10),transparent),radial-gradient(ellipse_45%_40%_at_82%_8%,hsl(160_84%_39%/0.10),transparent),radial-gradient(ellipse_40%_32%_at_55%_28%,hsl(213_94%_80%/0.16),transparent)]"
           />
           {/* sm–lg 单列居中;lg 起「标题 + 上传框左 / 对比图右」两列。
               两张 288px 对比图 + 箭头约 650px,在 lg 以下放不进半栏 */}
-          <div className="mx-auto grid max-w-6xl items-center gap-10 px-4 pt-14 text-center sm:px-6 sm:pt-18 lg:grid-cols-[minmax(0,1fr)_auto] lg:gap-12 lg:text-left">
+          <div className="mx-auto grid max-w-6xl items-center gap-10 px-4 pt-12 text-center sm:px-6 sm:pt-14 lg:grid-cols-[minmax(0,1fr)_auto] lg:gap-12 lg:text-left">
             <div className="min-w-0">
-              <h1 className="animate-rise text-balance text-4xl font-extrabold tracking-tight sm:text-5xl">
-                Photo Background Changer
+              <h1 className="animate-rise mt-4 text-balance text-4xl font-extrabold tracking-tight sm:text-5xl">
+                Photo{" "}
+                <span className="relative inline-block">
+                  Background
+                  <span aria-hidden className="absolute inset-x-[-2px] bottom-[6px] -z-10 h-[14px] rounded-[7px] bg-accent/20 sm:bottom-[8px] sm:h-[16px]" />
+                </span>{" "}
+                Changer
               </h1>
               <p
                 className="animate-rise mx-auto mt-5 max-w-2xl text-pretty text-base leading-relaxed text-muted-foreground sm:text-lg lg:mx-0"
@@ -276,10 +176,10 @@ export default function Home() {
               {/* 上传入口:整块点击跳到工具区 */}
               <HashLink
                 href="/#tool"
-                className="animate-rise group mx-auto mt-7 flex max-w-md flex-col items-center gap-2 rounded-xl border-2 border-dashed border-primary/25 bg-card/70 px-6 py-5 transition-colors hover:border-primary/50 sm:flex-row sm:justify-center sm:gap-4 lg:mx-0 lg:justify-start"
+                className="animate-rise group mx-auto mt-7 flex max-w-md flex-col items-center gap-3 rounded-2xl border-2 border-dashed border-primary/25 bg-card px-6 py-5 shadow-sm transition-colors hover:border-primary/50 sm:flex-row sm:justify-center sm:gap-4 lg:mx-0 lg:justify-start"
                 style={{ animationDelay: "140ms" }}
               >
-                <span className="inline-flex items-center gap-2 rounded-[8px] bg-accent px-5 py-3 text-sm font-semibold text-accent-foreground shadow-sm transition-transform group-hover:-translate-y-0.5"><Upload className="size-4" aria-hidden />Try it free</span>
+                <span className="inline-flex items-center gap-2 rounded-full bg-primary px-6 py-3 text-sm font-semibold text-primary-foreground shadow-sm transition-transform group-hover:-translate-y-0.5"><Upload className="size-4" aria-hidden />Try it free</span>
                 <span className="text-xs text-muted-foreground">JPG / PNG / WebP</span>
               </HashLink>
               <p className="mt-4 text-xs text-muted-foreground">Processed on your device — your photo is never uploaded</p>
@@ -295,7 +195,7 @@ export default function Home() {
                     key={label}
                     className="inline-flex items-center gap-1.5 rounded-full border border-border bg-card px-3.5 py-1.5 text-sm font-medium shadow-sm"
                   >
-                    <Icon className="size-3.5 text-emerald-600" aria-hidden />
+                    <Icon className={`size-3.5 text-primary`} aria-hidden />
                     {label}
                   </li>
                 ))}
@@ -318,7 +218,7 @@ export default function Home() {
                   sizes="(min-width: 1280px) 288px, (min-width: 1024px) 224px, (min-width: 640px) 288px, 192px"
                   className="object-cover"
                 />
-                <figcaption className="absolute bottom-2 left-2 rounded-full bg-foreground/70 px-2 py-0.5 text-[10px] font-semibold text-background backdrop-blur-sm">
+                <figcaption className="absolute bottom-2 left-2 rounded-full bg-foreground/55 px-2 py-0.5 text-[10px] font-semibold text-muted-foreground/90 backdrop-blur-sm">
                   Before
                 </figcaption>
               </figure>
@@ -338,7 +238,7 @@ export default function Home() {
                   sizes="(min-width: 1280px) 288px, (min-width: 1024px) 224px, (min-width: 640px) 288px, 192px"
                   className="object-cover"
                 />
-                <figcaption className="absolute bottom-2 left-2 rounded-full bg-background/85 px-2 py-0.5 text-[10px] font-semibold text-foreground backdrop-blur-sm">
+                <figcaption className="absolute bottom-2 left-2 rounded-full bg-background/85 px-2 py-0.5 text-[10px] font-semibold text-muted-foreground backdrop-blur-sm">
                   After
                 </figcaption>
               </figure>
@@ -349,85 +249,11 @@ export default function Home() {
         {/* —— 工具区(唯一的客户端岛) —— */}
         <BackgroundStudio />
 
-        {/* —— 背景选择说明(②) —— */}
-        <section id="backgrounds" className="scroll-mt-20 py-16 sm:py-20">
-          <div className="mx-auto max-w-2xl px-4 text-center sm:px-6">
-            <h2 className="text-2xl font-bold tracking-tight sm:text-3xl">
-              Pick a background
-            </h2>
-            <p className="mt-5 leading-relaxed text-muted-foreground">
-              You are not limited to a fixed set of presets. Pick a solid color
-              for a clean product shot, choose one of the background images in
-              our library, or upload a background of your own — a studio
-              backdrop, a desk, a garden. SwitchBG keeps the subject on its own
-              layer, so swapping the background out again takes one click and
-              never touches the edges of your photo.
-            </p>
-            <div className="mt-7 flex flex-wrap justify-center gap-3">
-              {[["#ffffff", "White"], ["#e5e7eb", "Light gray"], ["#f3e8d0", "Beige"], ["#dbeafe", "Light blue"], ["#dcfce7", "Light green"], ["#fce7f3", "Light pink"], ["#374151", "Dark gray"], ["#000000", "Black"]].map(([color, label]) => (
-                <HashLink key={label} href="/#tool" aria-label={`Use ${label} background`} className="size-12 rounded-lg border border-border shadow-sm transition-transform hover:-translate-y-1" style={{ backgroundColor: color }} />
-              ))}
-            </div>
-
-          </div>
-        </section>
-
-        {/* —— 效果展示:分类示例 + 前后对比滑块 —— */}
+        {/* —— 效果展示:三卡可拖动前后对比 —— */}
         <QualityShowcase />
 
-        {/* —— 使用说明:参考 remove.bg「Just picture it」,三步各配一张过程图(文案逐字) —— */}
-        <section id="how" className="scroll-mt-20 border-y border-border py-16 sm:py-20">
-          <div className="mx-auto max-w-6xl px-4 sm:px-6">
-            <div className="mx-auto max-w-2xl text-center">
-              <h2 className="text-2xl font-bold tracking-tight sm:text-3xl">
-                From photo to finished image in three steps
-              </h2>
-              <p className="mt-4 leading-relaxed text-muted-foreground">
-                No layers, masks or editing skills. SwitchBG guides you from the
-                first upload to a result you can use.
-              </p>
-            </div>
-            <ol className="mt-12 grid gap-10 sm:grid-cols-3 sm:gap-6 lg:gap-10">
-              {HOW_STEPS.map((step, i) => (
-                <li key={step.label} className="text-center">
-                  <figure
-                    className="relative aspect-[24/25] overflow-hidden rounded-xl border border-border bg-secondary shadow-sm"
-                    style={step.checker ? HOW_CHECKER_STYLE : undefined}
-                  >
-                    <Image
-                      src={step.visual}
-                      alt={step.alt}
-                      fill
-                      sizes="(min-width: 640px) 33vw, 100vw"
-                      className="object-cover"
-                    />
-                    <span className="absolute left-3 top-3 rounded-full bg-primary px-2.5 py-1 text-xs font-bold text-primary-foreground shadow-sm">
-                      {`0${i + 1}`}
-                    </span>
-                  </figure>
-                  <h3 className="mt-5 inline-flex items-center gap-2 text-lg font-semibold">
-                    <step.icon className="size-4.5 text-primary" strokeWidth={1.75} aria-hidden />
-                    {step.label}
-                  </h3>
-                  <p className="mx-auto mt-2 max-w-xs text-sm leading-relaxed text-muted-foreground">
-                    {step.detail}
-                  </p>
-                </li>
-              ))}
-            </ol>
-            <div className="mt-12 text-center">
-              <HashLink href="/#tool"
-                className="inline-flex items-center gap-2 rounded-[8px] bg-accent px-5 py-3 text-sm font-semibold text-accent-foreground shadow-sm transition-transform duration-150 hover:scale-[1.03] active:scale-[0.98]"
-              >
-                <Upload className="size-4" aria-hidden />
-                Choose a photo
-              </HashLink>
-            </div>
-          </div>
-        </section>
-
         <section id="ideas" className="scroll-mt-20 py-16 sm:py-20">
-          <div className="mx-auto max-w-6xl px-4 sm:px-6">
+          <div className="mx-auto max-w-7xl px-4 sm:px-6">
             <div className="max-w-2xl">
               <h2 className="text-2xl font-bold tracking-tight sm:text-3xl">
                 A fresh background for everyday photos
@@ -437,58 +263,37 @@ export default function Home() {
                 what you want to make.
               </p>
             </div>
-            <div className="mt-10 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+            <div className="mt-10 grid gap-8 sm:grid-cols-2 lg:grid-cols-3">
               {USE_CASES.map((useCase) => (
-                <Link key={useCase.title} href={useCase.href} className="group block overflow-hidden rounded-xl border border-border bg-card p-4 transition-shadow hover:shadow-md">
-                  <div className="grid aspect-[4/3] grid-cols-2 overflow-hidden rounded-[8px] border border-border bg-secondary">
+                <div key={useCase.title} className="group overflow-hidden rounded-2xl border border-border bg-card p-4 shadow-sm transition-transform duration-200 hover:-translate-y-1 hover:shadow-lg">
+                  <div className="grid aspect-[4/3] grid-cols-2 overflow-hidden rounded-xl border border-border bg-secondary">
                     <div className="relative border-r border-border">
-                      <span className="absolute left-3 top-3 z-10 rounded-full bg-background px-2.5 py-1 text-xs font-medium text-foreground shadow-sm">Before</span>
+                      <span className="absolute left-3 top-3 z-10 rounded-full bg-background px-2.5 py-1 text-xs font-medium text-muted-foreground shadow-sm">Before</span>
                       <UseCaseFigure src={useCase.before} alt={useCase.beforeAlt} />
                     </div>
                     <div className="relative">
-                      <span className="absolute left-3 top-3 z-10 rounded-full bg-background px-2.5 py-1 text-xs font-medium text-foreground shadow-sm">After</span>
+                      <span className="absolute left-3 top-3 z-10 rounded-full bg-background px-2.5 py-1 text-xs font-medium text-muted-foreground shadow-sm">After</span>
                       <UseCaseFigure src={useCase.after} alt={useCase.afterAlt} />
                     </div>
                   </div>
-                  <h3 className="mt-5 text-lg font-semibold">{useCase.title}</h3>
-                  <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
-                    {useCase.description}
-                  </p>
-                </Link>
+                  <div className="mt-5 flex flex-col items-center text-center">
+                    <h3 className="text-lg font-semibold">{useCase.title}</h3>
+                    <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
+                      {useCase.description}
+                    </p>
+                    <Link href={useCase.href} className="mt-3 inline-flex items-center gap-1.5 text-sm font-semibold text-primary">
+                      {useCase.linkLabel}
+                      <MoveRight className="size-4 transition-transform duration-150 group-hover:translate-x-0.5" aria-hidden />
+                    </Link>
+                  </div>
+                </div>
               ))}
             </div>
           </div>
         </section>
 
-        <section id="tips" className="scroll-mt-20 bg-secondary/60 py-16 sm:py-20">
-          <div className="mx-auto max-w-6xl px-4 sm:px-6">
-            <div className="grid gap-10 lg:grid-cols-[0.7fr_1.3fr] lg:gap-16">
-              <div>
-                <h2 className="text-2xl font-bold tracking-tight sm:text-3xl">
-                  Start with the right photo
-                </h2>
-                <p className="mt-4 max-w-md leading-relaxed text-muted-foreground">
-                  Better source photos produce cleaner edges. These simple checks
-                  help before you upload.
-                </p>
-              </div>
-              <ul className="grid gap-px overflow-hidden rounded-[8px] border border-border bg-border md:grid-cols-3">
-                {PHOTO_TIPS.map((tip) => (
-                  <li key={tip.title} className="bg-background p-6">
-                    <tip.icon className="size-5 text-primary" strokeWidth={1.75} aria-hidden />
-                    <h3 className="mt-5 font-semibold">{tip.title}</h3>
-                    <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
-                      {tip.description}
-                    </p>
-                  </li>
-                ))}
-              </ul>
-            </div>
-          </div>
-        </section>
-
-        <section id="why" className="scroll-mt-20 py-16 sm:py-20">
-          <div className="mx-auto max-w-4xl px-4 sm:px-6">
+        <section id="why" className="scroll-mt-20 bg-gradient-to-b from-background to-secondary/50 py-16 sm:py-20">
+          <div className="mx-auto max-w-5xl px-4 sm:px-6">
             <h2 className="text-center text-2xl font-bold tracking-tight sm:text-3xl">
               Why SwitchBG
             </h2>
@@ -503,97 +308,16 @@ export default function Home() {
                 return (
                   <li
                     key={bullet}
-                    className="flex items-start gap-4 rounded-xl border border-border bg-card p-5"
+                    className="flex items-center gap-4 rounded-2xl border border-border bg-card p-5 shadow-sm transition-shadow duration-200 hover:shadow-md"
                   >
-                    <span className="flex size-9 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary">
+                    <span className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary">
                       <Icon className="size-4.5" strokeWidth={1.75} />
                     </span>
-                    <span className="pt-1.5 font-medium">{bullet}</span>
+                    <span className="font-medium">{bullet}</span>
                   </li>
                 );
               })}
             </ul>
-          </div>
-        </section>
-
-        {/* —— 工作方式(⑧新增章节) —— */}
-        <section id="workflow" className="scroll-mt-20 bg-secondary/60 py-16 sm:py-20">
-          <div className="mx-auto max-w-3xl px-4 sm:px-6">
-            <h2 className="text-2xl font-bold tracking-tight sm:text-3xl">
-              A photo background replacer built for the way you actually work
-            </h2>
-            <p className="mt-5 leading-relaxed text-muted-foreground">
-              Most background replacers make you choose a preset and hope for
-              the best. SwitchBG cuts the subject out first, so you can drop in
-              any background — a color swatch, one of our library images, or a
-              file from your own device — and see the result on your photo
-              before you download. No layers, no masks, no editing timeline. If
-              you are replacing the background on a product shot for a
-              marketplace, or swapping a backdrop for a client, you get the
-              finished file without opening a photo editor.
-            </p>
-          </div>
-        </section>
-
-        {/* —— 内页入口卡片:四张卡=before/after 缩略图+H3+一句话+锚文本 —— */}
-        <section id="ways" className="scroll-mt-20 py-16 sm:py-20">
-          <div className="mx-auto max-w-6xl px-4 sm:px-6">
-            <div className="mx-auto max-w-2xl text-center">
-              <h2 className="text-2xl font-bold tracking-tight sm:text-3xl">
-                More ways to change a background
-              </h2>
-              <p className="mt-4 leading-relaxed text-muted-foreground">
-                Same tool, different starting point — pick the job that matches
-                your photo.
-              </p>
-            </div>
-            <div className="mt-12 grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
-              {TOOL_CARDS.map((card) => (
-                <Link
-                  key={card.href}
-                  href={card.href}
-                  className="group block rounded-xl border border-border bg-card p-4 transition-shadow duration-150 hover:shadow-md"
-                >
-                  <div className="flex gap-1.5" aria-hidden>
-                    <span
-                      className={`relative h-24 w-1/2 overflow-hidden rounded-md border border-border ${card.beforeChecker ? "" : "bg-secondary"}`}
-                      style={card.beforeChecker ? CHECKER_STYLE : undefined}
-                    >
-                      <Image
-                        src={card.before}
-                        alt=""
-                        fill
-                        sizes="150px"
-                        className="object-cover"
-                      />
-                    </span>
-                    <span
-                      className={`relative h-24 w-1/2 overflow-hidden rounded-md border border-border ${card.afterChecker ? "" : "bg-secondary"}`}
-                      style={card.afterChecker ? CHECKER_STYLE : undefined}
-                    >
-                      <Image
-                        src={card.after}
-                        alt=""
-                        fill
-                        sizes="150px"
-                        className="object-cover"
-                      />
-                    </span>
-                  </div>
-                  <h3 className="mt-4 font-semibold">{card.h3}</h3>
-                  <p className="mt-1.5 text-sm leading-relaxed text-muted-foreground">
-                    {card.desc}
-                  </p>
-                  <span className="mt-3 inline-flex items-center gap-1 text-sm font-medium text-primary">
-                    {card.anchor}
-                    <MoveRight
-                      className="size-3.5 transition-transform duration-150 group-hover:translate-x-0.5"
-                      aria-hidden
-                    />
-                  </span>
-                </Link>
-              ))}
-            </div>
           </div>
         </section>
 
@@ -631,23 +355,23 @@ export default function Home() {
           </div>
         </section>
 
-        <section className="border-t border-border py-14">
-          <div className="mx-auto flex max-w-4xl flex-col items-start justify-between gap-6 px-4 sm:flex-row sm:items-center sm:px-6">
-            <div>
-              <h2 className="text-xl font-bold tracking-tight">Ready to change a background?</h2>
-              <p className="mt-2 max-w-xl text-sm leading-relaxed text-muted-foreground">
+        <section className="py-16 sm:py-20">
+          <div className="mx-auto max-w-4xl px-4 sm:px-6">
+            <div className="relative overflow-hidden rounded-3xl bg-gradient-to-r from-primary to-accent px-6 py-14 text-center sm:px-12">
+              <h2 className="text-2xl font-bold tracking-tight text-primary-foreground sm:text-3xl">Ready to change a background?</h2>
+              <p className="mx-auto mt-4 max-w-xl text-sm leading-relaxed text-primary-foreground/90">
                 Whether you need one clean product photo, a batch of profile
                 pictures, or a cutout for a design of your own, the whole job
                 happens on one page. Upload an image, choose the background you
                 want, and download it — no account, no watermark, no wait.
               </p>
+              <HashLink href="/#tool"
+                className="mt-7 inline-flex items-center gap-2 rounded-full bg-background px-6 py-3 text-sm font-semibold text-primary shadow-sm transition-transform duration-150 hover:scale-[1.03] active:scale-[0.98]"
+              >
+                <Upload className="size-4" aria-hidden />
+                Choose a photo
+              </HashLink>
             </div>
-            <HashLink href="/#tool"
-              className="inline-flex items-center gap-2 rounded-[8px] bg-accent px-5 py-3 text-sm font-semibold text-accent-foreground shadow-sm"
-            >
-              <Upload className="size-4" aria-hidden />
-              Choose a photo
-            </HashLink>
           </div>
         </section>
       </main>

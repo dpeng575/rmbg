@@ -40,7 +40,7 @@ export function SiteHeader() {
 
         <HashLink
           href="/#tool"
-          className="rounded-full bg-accent px-5 py-2 text-sm font-semibold text-accent-foreground shadow-sm transition-transform duration-150 hover:scale-[1.03] active:scale-[0.98]"
+          className="rounded-full bg-primary px-5 py-2 text-sm font-semibold text-accent-foreground shadow-sm transition-transform duration-150 hover:scale-[1.03] active:scale-[0.98]"
         >
           Change a background
         </HashLink>
