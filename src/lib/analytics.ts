@@ -36,6 +36,8 @@ type AnalyticsEvents = {
     success_count_bucket: CountBucket;
     failed: boolean;
   };
+  phone_hint_expanded: Record<string, never>;
+  phone_handoff_landed: Record<string, never>;
 };
 
 declare global {

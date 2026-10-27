@@ -26,6 +26,7 @@ import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Gallery } from "./Gallery";
+import { PhoneTransferHint } from "./PhoneTransferHint";
 import {
   countBucket,
   durationBucket,
@@ -820,6 +821,13 @@ export function BackgroundStudio({ initialBackground }: { initialBackground?: Ba
     return () => window.removeEventListener("paste", onPaste);
   }, [acceptSources]);
 
+  // 扫码接力:手机上带着 handoff 参数打开,说明「在手机上继续」路径被用到
+  useEffect(() => {
+    if (new URLSearchParams(window.location.search).get("src") === "phone-handoff") {
+      trackEvent("phone_handoff_landed", {});
+    }
+  }, []);
+
   const onInputChange = (event: ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(event.target.files ?? []);
     acceptSources(files.map((file) => ({ blob: file, name: file.name })), "file");
@@ -1058,6 +1066,7 @@ function UploadPanel({ error, dragging, onChoose, onDragEnter, onDragLeave, onDr
           </div>
         </div>
       </div>
+      <PhoneTransferHint />
     </>
   );
 }
